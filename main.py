@@ -1,4 +1,4 @@
-from model.train import  train, eval
+from Diffusion import  train, eval
 
 
 def main(model_config = None):

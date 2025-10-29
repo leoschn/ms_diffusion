@@ -9,9 +9,9 @@ from torchvision import transforms
 from torchvision.datasets import CIFAR10
 from torchvision.utils import save_image
 
-from diffusion import GaussianDiffusionSampler, GaussianDiffusionTrainer
-from model import UNet
-from scheduler import GradualWarmupScheduler
+from Diffusion import GaussianDiffusionSampler, GaussianDiffusionTrainer
+from Diffusion import UNet
+from Diffusion import GradualWarmupScheduler
 
 
 def train(modelConfig: Dict):
@@ -28,7 +28,7 @@ def train(modelConfig: Dict):
     dataloader = DataLoader(
         dataset, batch_size=modelConfig["batch_size"], shuffle=True, num_workers=4, drop_last=True, pin_memory=True)
 
-    # model setup
+    # Diffusion setup
     net_model = UNet(T=modelConfig["T"], ch=modelConfig["channel"], ch_mult=modelConfig["channel_mult"], attn=modelConfig["attn"],
                      num_res_blocks=modelConfig["num_res_blocks"], dropout=modelConfig["dropout"]).to(device)
     if modelConfig["training_load_weight"] is not None:
@@ -67,7 +67,7 @@ def train(modelConfig: Dict):
 
 
 def eval(modelConfig: Dict):
-    # load model and evaluate
+    # load Diffusion and evaluate
     with torch.no_grad():
         device = torch.device(modelConfig["device"])
         model = UNet(T=modelConfig["T"], ch=modelConfig["channel"], ch_mult=modelConfig["channel_mult"], attn=modelConfig["attn"],
@@ -75,7 +75,7 @@ def eval(modelConfig: Dict):
         ckpt = torch.load(os.path.join(
             modelConfig["save_weight_dir"], modelConfig["test_load_weight"]), map_location=device)
         model.load_state_dict(ckpt)
-        print("model load weight done.")
+        print("Diffusion load weight done.")
         model.eval()
         sampler = GaussianDiffusionSampler(
             model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
