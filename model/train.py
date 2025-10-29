@@ -9,9 +9,9 @@ from torchvision import transforms
 from torchvision.datasets import CIFAR10
 from torchvision.utils import save_image
 
-from model.diffusion import GaussianDiffusionSampler, GaussianDiffusionTrainer
-from model.model import UNet
-from model.scheduler import GradualWarmupScheduler
+from diffusion import GaussianDiffusionSampler, GaussianDiffusionTrainer
+from model import UNet
+from scheduler import GradualWarmupScheduler
 
 
 def train(modelConfig: Dict):
