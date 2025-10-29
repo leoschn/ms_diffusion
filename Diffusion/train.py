@@ -11,7 +11,7 @@ from torchvision.utils import save_image
 
 from Diffusion import GaussianDiffusionSampler, GaussianDiffusionTrainer
 from Diffusion import UNet
-from Diffusion import GradualWarmupScheduler
+from scheduler import GradualWarmupScheduler
 
 
 def train(modelConfig: Dict):
