@@ -1,0 +1,122 @@
+import pickle
+from loess.loess_1d import loess_1d
+import pandas as pd
+import pyarrow.parquet as pq
+import numpy as np
+from findpeaks import findpeaks
+
+
+def load_lib(path):
+    table = pq.read_table(path)
+    table = table.to_pandas()
+
+    return table
+
+
+def extract_detected_features(img_path,chimerys_report_path,diann_lib_path,ref_align_path,aligned=False,matching_option=1):
+    img_data=pickle.load(open(img_path, 'rb'))
+    img_list = img_data['image']
+    metadata = img_data['metadata']
+    df_chimerys = pd.read_csv(chimerys_report_path,sep='\t')
+    df_chimerys['X']=((df_chimerys['RETENTION_TIME'] - metadata['start_rt']) / metadata['span_rt']) * metadata['max_cycle']
+    df_chimerys['X']=df_chimerys['X'].round(0).astype('int64')
+    df_chimerys=df_chimerys[['X','SEQUENCE','PRECURSOR_CHARGE','SCAN_NUMBER_IN_FILE']].drop_duplicates()
+
+    identified_seq = df_chimerys['SEQUENCE'].tolist() #TODO check PTMS integration + charge
+
+    diann_lib = load_lib(diann_lib_path)
+
+
+    #initialise peak detection
+    if matching_option == 2:
+        fp = findpeaks(method='topology', whitelist=['peak'], imsize=(img_list[0].shape[1], img_list[0].shape[0]),
+                       limit=20, denoise=None, verbose='off', scale=True)
+
+    #align RT
+    print('aligning RT')
+
+
+    if not aligned:
+        ref_align = pd.read_csv(ref_align_path, sep='\t')
+        ref_align['RT_expe'] = (ref_align['MIN_RETENTION_TIME'] + ref_align['MAX_RETENTION_TIME']) / 2
+
+        df_ref_align = load_lib('../data/library/lib_candida_albicans.parquet')
+        df_ref_align['SEQUENCE'] = df_ref_align['Stripped.Sequence']
+
+        df_tuning_rt = ref_align.join(df_ref_align.set_index('SEQUENCE'), on='SEQUENCE', how='inner')
+
+        xout, yout, wout = loess_1d(np.array(df_tuning_rt['RT'].tolist()), np.array(df_tuning_rt['RT_expe'].tolist()),
+                                    xnew=diann_lib['RT'],
+                                    degree=1,
+                                    npoints=None, rotate=False, sigy=None)
+
+        diann_lib['Aligned_RT'] = yout
+
+        diann_lib.to_parquet('../data/library/ref_lib_aligned.parquet')
+    diann_lib = diann_lib[['Stripped.Sequence','Modified.Sequence','Aligned_RT','RT','Precursor.Mz','Product.Mz','Precursor.Charge','Fragment.Type','Fragment.Series.Number','Relative.Intensity']]
+    # diann_lib = diann_lib[diann_lib['Stripped.Sequence'].map(lambda x: x in identified_seq)]
+
+    diann_lib['ms'] = (diann_lib['Precursor.Mz']-metadata['list_precursor_mass_center'][0])/4 +1
+    diann_lib['ms'] = diann_lib['ms'].round().astype(int)
+    diann_lib['X'] = (((diann_lib['Aligned_RT'] - metadata['start_rt']) / metadata['span_rt']) * metadata['max_cycle']).round(0).astype('int64')
+    diann_lib['Y'] = (((diann_lib['Product.Mz'] - metadata['ms1_start_mz']) / metadata['total_ms1_mz']) * metadata['n_bin_ms1']).round(0).astype('int64')
+
+
+    # for each identified peptide use diann to predict theoretical spectra :
+    # option 1 => use these spectra to directly compute conditioning image (with relative intensity)
+    # option 2 => use these spectra to match peak on the experimental image and build conditioning image based on matched peak and their measured relative intensity. Matching can be utterly restrictive (no RT shift + no mz shift) (exact correspondence)
+
+    conditioning_list=[]
+    #option 1
+    if matching_option == 1:
+        seq_id = df_chimerys['SEQUENCE'].tolist()
+        diann_lib_id = diann_lib[diann_lib['Stripped.Sequence'].isin(seq_id)]
+        nb_window = len(img_list)
+        for window in range(1,nb_window):
+            image_window = img_list[window]
+            conditioning=np.zeros_like(image_window)
+            seq_window = df_chimerys[df_chimerys['SCAN_NUMBER_IN_FILE'] % nb_window==window]['SEQUENCE'].tolist()
+
+            diann_lib_window = diann_lib_id[diann_lib_id['Stripped.Sequence'].isin(seq_window)]
+            print(len(seq_window),diann_lib_window.shape)
+            for row in  diann_lib_window.iterrows():
+                Y = row[1]['Y']
+                X = df_chimerys[df_chimerys['SEQUENCE']==row[1]['Stripped.Sequence']]['X'].iloc[0]
+                if X < conditioning.shape[0] and Y < conditioning.shape[1]:
+                    conditioning[X,Y]+=row[1]['Relative.Intensity']
+            conditioning_list.append(conditioning)
+            print(conditioning.sum())
+
+
+
+    #option 2
+    if matching_option == 2:
+        seq_id = df_chimerys['SEQUENCE'].tolist()
+        diann_lib_id = diann_lib[diann_lib['Stripped.Sequence'].isin(seq_id)]
+        nb_window = len(img_list)
+        for window in range(1,nb_window):
+            image_window = img_list[window]
+            conditioning=np.zeros_like(image_window)
+            res = fp.fit(img_list[window])
+            seq_window = df_chimerys[df_chimerys['SCAN_NUMBER_IN_FILE'] % nb_window==window]['SEQUENCE'].tolist()
+            df_detected_peaks = pd.DataFrame(res['persistence'])
+            diann_lib_window = diann_lib_id[diann_lib_id['Stripped.Sequence'].isin(seq_window)]
+            # peaks_detected = np.array([[y, x] for x, y in zip(res['persistence']['x'], res['persistence']['y'])])
+            for row in df_chimerys[df_chimerys['SCAN_NUMBER_IN_FILE'] % nb_window==window].iterrows():
+                x_detected = row[1]['X']
+                df_seq = diann_lib_window[diann_lib_id['Stripped.Sequence']==row[1]['SEQUENCE']]['Y','Relative.Intensity']
+                relevant_peak = df_detected_peaks[df_detected_peaks['X']==x_detected]
+                for row in df_seq[df_seq['Y'].isin(relevant_peak['Y'].tolist())].iterrows():
+                    if x_detected < conditioning.shape[0] and row[1]['Y'] < conditioning.shape[1]:
+                        conditioning[x_detected,row[1]['Y']]+=row[1]['Relative.Intensity']
+            conditioning_list.append(conditioning)
+
+
+    pickle.dump(conditioning_list, open('../data/conditioning/conditioning_list.pkl', 'wb'))
+
+    return conditioning_list
+
+if __name__ == '__main__':
+    cond_list = extract_detected_features(img_path='../data/image/ESCCOL100.pkl',chimerys_report_path='../data/chimerys/ESCCOL100/psms.tsv',diann_lib_path='../data/library/ref_lib_aligned.parquet',ref_align_path='../data/chimerys/alignment/precursors.tsv',aligned=True,matching_option=1)
+    # diann_lib = load_lib('../data/library/ref_lib.parquet')
+    # diann_lib_aligned = load_lib('../data/library/ref_lib_aligned.parquet')
