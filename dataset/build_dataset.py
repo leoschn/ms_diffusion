@@ -13,6 +13,11 @@ def load_lib(path):
     return table
 
 
+def cross_group(group_seq, group_lib):
+    return group_seq.merge(group_lib, how='cross',suffixes=('_left', '_right'))
+
+
+#TODO integrate PEP filtering + dans l'alignement
 def extract_detected_features(img_path,chimerys_report_path,diann_lib_path,ref_align_path,aligned=False,matching_option=1):
     img_data=pickle.load(open(img_path, 'rb'))
     img_list = img_data['image']
@@ -21,8 +26,7 @@ def extract_detected_features(img_path,chimerys_report_path,diann_lib_path,ref_a
     df_chimerys['X']=((df_chimerys['RETENTION_TIME'] - metadata['start_rt']) / metadata['span_rt']) * metadata['max_cycle']
     df_chimerys['X']=df_chimerys['X'].round(0).astype('int64')
     df_chimerys=df_chimerys[['X','SEQUENCE','PRECURSOR_CHARGE','SCAN_NUMBER_IN_FILE']].drop_duplicates()
-
-    identified_seq = df_chimerys['SEQUENCE'].tolist() #TODO check PTMS integration + charge
+     #TODO charge
 
     diann_lib = load_lib(diann_lib_path)
 
@@ -53,8 +57,8 @@ def extract_detected_features(img_path,chimerys_report_path,diann_lib_path,ref_a
         diann_lib['Aligned_RT'] = yout
 
         diann_lib.to_parquet('../data/library/ref_lib_aligned.parquet')
-    diann_lib = diann_lib[['Stripped.Sequence','Modified.Sequence','Aligned_RT','RT','Precursor.Mz','Product.Mz','Precursor.Charge','Fragment.Type','Fragment.Series.Number','Relative.Intensity']]
-    # diann_lib = diann_lib[diann_lib['Stripped.Sequence'].map(lambda x: x in identified_seq)]
+    diann_lib = diann_lib[['Modified.Sequence','Aligned_RT','RT','Precursor.Mz','Product.Mz','Precursor.Charge','Fragment.Type','Fragment.Series.Number','Relative.Intensity']]
+    # diann_lib = diann_lib[diann_lib['Modified.Sequence'].map(lambda x: x in identified_seq)]
 
     diann_lib['ms'] = (diann_lib['Precursor.Mz']-metadata['list_precursor_mass_center'][0])/4 +1
     diann_lib['ms'] = diann_lib['ms'].round().astype(int)
@@ -67,21 +71,30 @@ def extract_detected_features(img_path,chimerys_report_path,diann_lib_path,ref_a
     # option 2 => use these spectra to match peak on the experimental image and build conditioning image based on matched peak and their measured relative intensity. Matching can be utterly restrictive (no RT shift + no mz shift) (exact correspondence)
 
     conditioning_list=[]
-    #option 1
+    #option 1 use all predicted peak from detected peptides as conditioning
     if matching_option == 1:
         seq_id = df_chimerys['SEQUENCE'].tolist()
-        diann_lib_id = diann_lib[diann_lib['Stripped.Sequence'].isin(seq_id)]
+        diann_lib_id = diann_lib[diann_lib['Modified.Sequence'].isin(seq_id)]
         nb_window = len(img_list)
         for window in range(1,nb_window):
             image_window = img_list[window]
             conditioning=np.zeros_like(image_window)
-            seq_window = df_chimerys[df_chimerys['SCAN_NUMBER_IN_FILE'] % nb_window==window]['SEQUENCE'].tolist()
+            df_chimerys_window = df_chimerys[df_chimerys['SCAN_NUMBER_IN_FILE'] % nb_window==window]
 
-            diann_lib_window = diann_lib_id[diann_lib_id['Stripped.Sequence'].isin(seq_window)]
-            print(len(seq_window),diann_lib_window.shape)
-            for row in  diann_lib_window.iterrows():
+            df_combine_window = (
+                df_chimerys_window
+                .groupby(['SEQUENCE', 'PRECURSOR_CHARGE'], group_keys=False)
+                .apply(lambda g: cross_group(g, diann_lib_id[
+                    (diann_lib_id['Modified.Sequence'] == g.name[0]) &
+                    (diann_lib_id['Precursor.Charge'] == g.name[1])
+                    ]))
+                .reset_index(drop=True)
+            )
+
+            print(df_combine_window,df_combine_window.shape)
+            for row in  df_combine_window.iterrows():
                 Y = row[1]['Y']
-                X = df_chimerys[df_chimerys['SEQUENCE']==row[1]['Stripped.Sequence']]['X'].iloc[0]
+                X = row[1]['X_left']
                 if X < conditioning.shape[0] and Y < conditioning.shape[1]:
                     conditioning[X,Y]+=row[1]['Relative.Intensity']
             conditioning_list.append(conditioning)
@@ -89,26 +102,33 @@ def extract_detected_features(img_path,chimerys_report_path,diann_lib_path,ref_a
 
 
 
-    #option 2
+    #option 2 use predicted peak from detected peptides as conditioning ONLY IF they have been also detected
     if matching_option == 2:
         seq_id = df_chimerys['SEQUENCE'].tolist()
-        diann_lib_id = diann_lib[diann_lib['Stripped.Sequence'].isin(seq_id)]
+        diann_lib_id = diann_lib[diann_lib['Modified.Sequence'].isin(seq_id)]
         nb_window = len(img_list)
         for window in range(1,nb_window):
             image_window = img_list[window]
             conditioning=np.zeros_like(image_window)
             res = fp.fit(img_list[window])
-            seq_window = df_chimerys[df_chimerys['SCAN_NUMBER_IN_FILE'] % nb_window==window]['SEQUENCE'].tolist()
+            df_chimerys_window = df_chimerys[df_chimerys['SCAN_NUMBER_IN_FILE'] % nb_window==window]
             df_detected_peaks = pd.DataFrame(res['persistence'])
-            diann_lib_window = diann_lib_id[diann_lib_id['Stripped.Sequence'].isin(seq_window)]
-            # peaks_detected = np.array([[y, x] for x, y in zip(res['persistence']['x'], res['persistence']['y'])])
-            for row in df_chimerys[df_chimerys['SCAN_NUMBER_IN_FILE'] % nb_window==window].iterrows():
-                x_detected = row[1]['X']
-                df_seq = diann_lib_window[diann_lib_id['Stripped.Sequence']==row[1]['SEQUENCE']]['Y','Relative.Intensity']
-                relevant_peak = df_detected_peaks[df_detected_peaks['X']==x_detected]
-                for row in df_seq[df_seq['Y'].isin(relevant_peak['Y'].tolist())].iterrows():
-                    if x_detected < conditioning.shape[0] and row[1]['Y'] < conditioning.shape[1]:
-                        conditioning[x_detected,row[1]['Y']]+=row[1]['Relative.Intensity']
+
+            df_combine_window = (
+                df_chimerys_window
+                .groupby(['SEQUENCE', 'PRECURSOR_CHARGE'], group_keys=False)
+                .apply(lambda g: cross_group(g, diann_lib_id[
+                    (diann_lib_id['Modified.Sequence'] == g.name[0]) &
+                    (diann_lib_id['Precursor.Charge'] == g.name[1])
+                    ]))
+                .reset_index(drop=True)
+            )
+
+            df_revelant_peaks = pd.merge(df_combine_window,df_detected_peaks,left_on=['X','Y'],right_on=['X','Y'],how='inner')
+
+            for row in df_revelant_peaks.iterrows():
+                if row[1]['X'] < conditioning.shape[0] and row[1]['Y'] < conditioning.shape[1]:
+                    conditioning[row[1]['X'], row[1]['Y']] += row[1]['Relative.Intensity']
             conditioning_list.append(conditioning)
 
 
