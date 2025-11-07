@@ -17,12 +17,13 @@ def cross_group(group_seq, group_lib):
     return group_seq.merge(group_lib, how='cross',suffixes=('_left', '_right'))
 
 
-#TODO integrate PEP filtering + dans l'alignement
-def extract_detected_features(img_path,chimerys_report_path,diann_lib_path,ref_align_path,aligned=False,matching_option=1):
+
+def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_lib_path,ref_align_path,aligned=False,matching_option=1,fdr=0.05):
     img_data=pickle.load(open(img_path, 'rb'))
     img_list = img_data['image']
     metadata = img_data['metadata']
     df_chimerys = pd.read_csv(chimerys_report_path,sep='\t')
+    df_chimerys = df_chimerys[df_chimerys['PEP']<=fdr]
     df_chimerys['X']=((df_chimerys['RETENTION_TIME'] - metadata['start_rt']) / metadata['span_rt']) * metadata['max_cycle']
     df_chimerys['X']=df_chimerys['X'].round(0).astype('int64')
     df_chimerys=df_chimerys[['X','SEQUENCE','PRECURSOR_CHARGE','SCAN_NUMBER_IN_FILE']].drop_duplicates()
@@ -132,9 +133,18 @@ def extract_detected_features(img_path,chimerys_report_path,diann_lib_path,ref_a
             conditioning_list.append(conditioning)
 
 
-    pickle.dump(conditioning_list, open('../data/conditioning/conditioning_list.pkl', 'wb'))
+    pickle.dump(conditioning_list, open(f'../data/conditioning/{sample_name}/conditioning_list.pkl', 'wb'))
 
     return conditioning_list
+
+
+def main():
+    for sample in ['ESCCOL100']:
+        cond_list = extract_detected_features(sample_name=sample,img_path=f'../data/image/{sample}.pkl',
+                                              chimerys_report_path=f'../data/chimerys/{sample}/precursors.tsv',
+                                              diann_lib_path=f'../data/library/ref_lib_aligned.parquet',
+                                              ref_align_path=f'../data/chimerys/alignment/precursors.tsv', aligned=True,
+                                              matching_option=1,fdr=0.05)
 
 if __name__ == '__main__':
     cond_list = extract_detected_features(img_path='../data/image/ESCCOL100.pkl',chimerys_report_path='../data/chimerys/ESCCOL100/psms.tsv',diann_lib_path='../data/library/ref_lib_aligned.parquet',ref_align_path='../data/chimerys/alignment/precursors.tsv',aligned=True,matching_option=1)
