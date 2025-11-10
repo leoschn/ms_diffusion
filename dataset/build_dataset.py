@@ -145,7 +145,7 @@ def main():
                                               chimerys_report_path=f'../data/chimerys/{sample}/precursors.tsv',
                                               diann_lib_path=f'../data/library/ref_lib_aligned.parquet',
                                               ref_align_path=f'../data/chimerys/alignment/precursors.tsv', aligned=True,
-                                              matching_option=1,fdr=0.05,sample=sample)
+                                              matching_option=1,fdr=0.05)
 
 if __name__ == '__main__':
     main()
