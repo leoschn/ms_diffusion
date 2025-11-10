@@ -45,7 +45,7 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
         ref_align = pd.read_csv(ref_align_path, sep='\t')
         ref_align['RT_expe'] = (ref_align['MIN_RETENTION_TIME'] + ref_align['MAX_RETENTION_TIME']) / 2
 
-        df_ref_align = load_lib('../data/library/lib_candida_albicans.parquet')
+        df_ref_align = load_lib('data/library/lib_candida_albicans.parquet')
         df_ref_align['SEQUENCE'] = df_ref_align['Stripped.Sequence']
 
         df_tuning_rt = ref_align.join(df_ref_align.set_index('SEQUENCE'), on='SEQUENCE', how='inner')
@@ -57,7 +57,7 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
 
         diann_lib['Aligned_RT'] = yout
 
-        diann_lib.to_parquet('../data/library/ref_lib_aligned.parquet')
+        diann_lib.to_parquet('data/library/ref_lib_aligned.parquet')
     diann_lib = diann_lib[['Modified.Sequence','Aligned_RT','RT','Precursor.Mz','Product.Mz','Precursor.Charge','Fragment.Type','Fragment.Series.Number','Relative.Intensity']]
     # diann_lib = diann_lib[diann_lib['Modified.Sequence'].map(lambda x: x in identified_seq)]
 
@@ -133,7 +133,7 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
             conditioning_list.append(conditioning)
 
 
-    pickle.dump(conditioning_list, open(f'../data/conditioning/{sample_name}/conditioning_list.pkl', 'wb'))
+    pickle.dump(conditioning_list, open(f'data/conditioning/{sample_name}/conditioning_list.pkl', 'wb'))
 
     return conditioning_list
 
@@ -141,10 +141,10 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
 def main():
     for sample in ['ESCCOL100','CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA']:
         print(sample)
-        cond_list = extract_detected_features(sample_name=sample,img_path=f'../data/image/{sample}.pkl',
-                                              chimerys_report_path=f'../data/chimerys/{sample}/precursors.tsv',
-                                              diann_lib_path=f'../data/library/ref_lib_aligned.parquet',
-                                              ref_align_path=f'../data/chimerys/alignment/precursors.tsv', aligned=True,
+        cond_list = extract_detected_features(sample_name=sample,img_path=f'data/image/{sample}.pkl',
+                                              chimerys_report_path=f'data/chimerys/{sample}/precursors.tsv',
+                                              diann_lib_path=f'data/library/ref_lib_aligned.parquet',
+                                              ref_align_path=f'data/chimerys/alignment/precursors.tsv', aligned=True,
                                               matching_option=1,fdr=0.05)
 
 if __name__ == '__main__':
