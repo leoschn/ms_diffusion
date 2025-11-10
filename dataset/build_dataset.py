@@ -23,7 +23,7 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
     img_list = img_data['image']
     metadata = img_data['metadata']
     df_chimerys = pd.read_csv(chimerys_report_path,sep='\t')
-    df_chimerys['RETENTION_TIME'] = (df_chimerys['MIN_RETENTION_TIME'] + df_chimerys['MAX_RETENTION_TIME']) / 2
+    # df_chimerys['RETENTION_TIME'] = (df_chimerys['MIN_RETENTION_TIME'] + df_chimerys['MAX_RETENTION_TIME']) / 2
     df_chimerys = df_chimerys[df_chimerys['PEP']<=fdr]
     df_chimerys['X']=((df_chimerys['RETENTION_TIME'] - metadata['start_rt']) / metadata['span_rt']) * metadata['max_cycle']
     df_chimerys['X']=df_chimerys['X'].round(0).astype('int64')
@@ -143,7 +143,7 @@ def main():
     for sample in ['ESCCOL100','CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA']:
         print(sample)
         cond_list = extract_detected_features(sample_name=sample,img_path=f'data/image/{sample}.pkl',
-                                              chimerys_report_path=f'data/chimerys/{sample}/precursors.tsv',
+                                              chimerys_report_path=f'data/chimerys/{sample}/psms.tsv',
                                               diann_lib_path=f'data/library/ref_lib_aligned.parquet',
                                               ref_align_path=f'data/chimerys/alignment/precursors.tsv', aligned=True,
                                               matching_option=1,fdr=0.05)
