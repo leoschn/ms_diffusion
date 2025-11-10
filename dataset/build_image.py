@@ -61,7 +61,7 @@ def build_image_ms2_raw(path_raw,out_path,bin_mz=1):
     return data_out
 
 if __name__ == '__main__':
-    #'CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36',
-    for sample in ['STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA']:
+    #'CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA'
+    for sample in ['ESCCOL100']:
         print(sample)
-        data_out = build_image_ms2_raw(f'../data/raw/20250624_{sample}_VN_Microflow_100pct_ACN_15min_4Th_DIA_5ul_inj_1.raw',f'../data/image/{sample}.pkl')
+        data_out = build_image_ms2_raw(f'data/raw/20250624_{sample}_VN_Microflow_100pct_ACN_15min_4Th_DIA_5ul_inj_1.raw',f'data/image/{sample}.pkl')
