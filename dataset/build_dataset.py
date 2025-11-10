@@ -1,3 +1,4 @@
+import os
 import pickle
 from loess.loess_1d import loess_1d
 import pandas as pd
@@ -133,7 +134,7 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
                     conditioning[row[1]['X'], row[1]['Y']] += row[1]['Relative.Intensity']
             conditioning_list.append(conditioning)
 
-
+    os.makedirs(f'data/conditioning/{sample_name}',exist_ok=True)
     pickle.dump(conditioning_list, open(f'data/conditioning/{sample_name}/conditioning_list.pkl', 'wb'))
 
     return conditioning_list
