@@ -23,6 +23,7 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
     img_list = img_data['image']
     metadata = img_data['metadata']
     df_chimerys = pd.read_csv(chimerys_report_path,sep='\t')
+    df_chimerys['RETENTION_TIME'] = (df_chimerys['MIN_RETENTION_TIME'] + df_chimerys['MAX_RETENTION_TIME']) / 2
     df_chimerys = df_chimerys[df_chimerys['PEP']<=fdr]
     df_chimerys['X']=((df_chimerys['RETENTION_TIME'] - metadata['start_rt']) / metadata['span_rt']) * metadata['max_cycle']
     df_chimerys['X']=df_chimerys['X'].round(0).astype('int64')
