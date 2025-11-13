@@ -46,11 +46,11 @@ def train(modelConfig: Dict):
     # start training
     for e in range(modelConfig["epoch"]):
         with tqdm(dataloader, dynamic_ncols=True) as tqdmDataLoader:
-            for images, labels in tqdmDataLoader:
+            for images, cond in tqdmDataLoader:
                 # train
                 optimizer.zero_grad()
                 x_0 = images.to(device)
-                loss = trainer(x_0).sum() / 1000.
+                loss = trainer(x_0,cond).sum() / 1000.
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(
                     net_model.parameters(), modelConfig["grad_clip"])
@@ -67,6 +67,9 @@ def train(modelConfig: Dict):
 
 
 def eval(modelConfig: Dict):
+    # eval dataset loading
+
+
     # load Diffusion and evaluate
     with torch.no_grad():
         device = torch.device(modelConfig["device"])
@@ -85,7 +88,7 @@ def eval(modelConfig: Dict):
         saveNoisy = torch.clamp(noisyImage * 0.5 + 0.5, 0, 1)
         save_image(saveNoisy, os.path.join(
             modelConfig["sampled_dir"], modelConfig["sampledNoisyImgName"]), nrow=modelConfig["nrow"])
-        sampledImgs = sampler(noisyImage)
+        sampledImgs = sampler(noisyImage, cond)
         sampledImgs = sampledImgs * 0.5 + 0.5  # [0 ~ 1]
         save_image(sampledImgs, os.path.join(
             modelConfig["sampled_dir"],  modelConfig["sampledImgName"]), nrow=modelConfig["nrow"])

@@ -165,7 +165,7 @@ class UNet(nn.Module):
         tdim = ch * 4
         self.time_embedding = TimeEmbedding(T, ch, tdim)
 
-        self.head = nn.Conv2d(3, ch, kernel_size=3, stride=1, padding=1)
+        self.head = nn.Conv2d(2, ch, kernel_size=3, stride=1, padding=1)
         self.downblocks = nn.ModuleList()
         chs = [ch]  # record output channel when dowmsample for upsample
         now_ch = ch
@@ -201,7 +201,7 @@ class UNet(nn.Module):
         self.tail = nn.Sequential(
             nn.GroupNorm(32, now_ch),
             Swish(),
-            nn.Conv2d(now_ch, 3, 3, stride=1, padding=1)
+            nn.Conv2d(now_ch, 1, 3, stride=1, padding=1)
         )
         self.initialize()
 
@@ -211,11 +211,12 @@ class UNet(nn.Module):
         init.xavier_uniform_(self.tail[-1].weight, gain=1e-5)
         init.zeros_(self.tail[-1].bias)
 
-    def forward(self, x, t):
+    def forward(self, x, t, cond):
         # Timestep embedding
         temb = self.time_embedding(t)
         # Downsampling
-        h = self.head(x)
+        x_cond = torch.cat([x, cond], dim=1)
+        h = self.head(x_cond)
         hs = [h]
         for layer in self.downblocks:
             h = layer(h, temb)

@@ -59,14 +59,17 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
         df_ref_align = load_lib('data/library/lib_candida_albicans.parquet')
         df_ref_align['SEQUENCE'] = df_ref_align['Stripped.Sequence']
 
+        dian_lib_reduced = diann_lib[['Modified.Sequence','RT']].drop_duplicates()
+
         df_tuning_rt = ref_align.join(df_ref_align.set_index('SEQUENCE'), on='SEQUENCE', how='inner')
 
         xout, yout, wout = loess_1d(np.array(df_tuning_rt['RT'].tolist()), np.array(df_tuning_rt['RT_expe'].tolist()),
-                                    xnew=diann_lib['RT'],
+                                    xnew=dian_lib_reduced['RT'],
                                     degree=1,
                                     npoints=None, rotate=False, sigy=None)
 
-        diann_lib['Aligned_RT'] = yout
+        dian_lib_reduced['Aligned_RT'] = yout
+        diann_lib = pd.merge(diann_lib, dian_lib_reduced, on=['Modified.Sequence','RT'], how='left')
         specie = re.split(r'(?=\d)', sample_name)[0]
         diann_lib.to_parquet(f'data/library/{specie}_aligned.parquet')
     diann_lib = diann_lib[['Modified.Sequence','Aligned_RT','RT','Precursor.Mz','Product.Mz','Precursor.Charge','Fragment.Type','Fragment.Series.Number','Relative.Intensity']]
