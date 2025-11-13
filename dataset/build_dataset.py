@@ -1,10 +1,17 @@
 import os
 import pickle
+import re
+from random import choice
+
 from loess.loess_1d import loess_1d
 import pandas as pd
 import pyarrow.parquet as pq
 import numpy as np
 from findpeaks import findpeaks
+from os import listdir
+from os.path import isfile, join
+
+from matplotlib import pyplot as plt
 
 
 def load_lib(path):
@@ -58,8 +65,8 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
                                     npoints=None, rotate=False, sigy=None)
 
         diann_lib['Aligned_RT'] = yout
-
-        diann_lib.to_parquet('data/library/ref_lib_aligned.parquet')
+        specie = re.split(r'(?=\d)', sample_name)[0]
+        diann_lib.to_parquet(f'data/library/{specie}_aligned.parquet')
     diann_lib = diann_lib[['Modified.Sequence','Aligned_RT','RT','Precursor.Mz','Product.Mz','Precursor.Charge','Fragment.Type','Fragment.Series.Number','Relative.Intensity']]
     # diann_lib = diann_lib[diann_lib['Modified.Sequence'].map(lambda x: x in identified_seq)]
 
@@ -78,6 +85,8 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
     if matching_option == 1:
         seq_id = df_chimerys['SEQUENCE'].tolist()
         diann_lib_id = diann_lib[diann_lib['Modified.Sequence'].isin(seq_id)]
+        print('nb_id total',len(seq_id))
+        print('nb_frag total',len(diann_lib_id))
         nb_window = len(img_list)
         for window in range(1,nb_window):
             image_window = img_list[window]
@@ -94,7 +103,7 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
                 .reset_index(drop=True)
             )
 
-            print(df_combine_window,df_combine_window.shape)
+            print(df_combine_window.shape)
             for row in  df_combine_window.iterrows():
                 Y = row[1]['Y']
                 X = row[1]['X_left']
@@ -139,14 +148,37 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
 
     return conditioning_list
 
+def build_training_pairs():
+    for sample in ['ESCCOL100','CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA']:
+        img_data = pickle.load(open(f'../data/image/{sample}.pkl', 'rb'))['image']
+        cond_data = pickle.load(open(f'../data/conditioning/{sample}/conditioning_list.pkl', 'rb'))
+        for window in range(1,len(img_data)):
+            img = img_data[window]
+            cond = cond_data[window-1]
+            with open(f'../data/processed_pairs/{sample}_ms2_{window}.pkl', 'wb') as f:
+                pickle.dump((img,cond), f)
+
+def plot_random_pairs():
+    mypath = '../data/processed_pairs'
+    onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+    f_name = choice(onlyfiles)
+    with open(f'../data/processed_pairs/{f_name}', 'rb') as f:
+        img,cond = pickle.load(f)
+    fig, axs = plt.subplots(2)
+    axs[0].imshow(img)
+    axs[1].imshow(cond)
+    plt.savefig(f'..img_{f_name}.png')
+
+
 
 def main():
     for sample in ['ESCCOL100','CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA']:
         print(sample)
-        cond_list = extract_detected_features(sample_name=sample,img_path=f'data/image/{sample}.pkl',
-                                              chimerys_report_path=f'data/chimerys/{sample}/psms.tsv',
-                                              diann_lib_path=f'data/library/ref_lib_aligned.parquet',
-                                              ref_align_path=f'data/chimerys/alignment/precursors.tsv', aligned=True,
+        specie = re.split(r'(?=\d)', sample)[0]
+        cond_list = extract_detected_features(sample_name=sample,img_path=f'../data/image/{sample}.pkl',
+                                              chimerys_report_path=f'../data/chimerys/{sample}/psms.tsv',
+                                              diann_lib_path=f'../data/library/{specie}_universal_cont_blood.parquet',
+                                              ref_align_path=f'../data/chimerys/alignment/precursors.tsv', aligned=False,
                                               matching_option=1,fdr=0.05)
 
 if __name__ == '__main__':
