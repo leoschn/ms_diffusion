@@ -177,7 +177,8 @@ def plot_random_pairs():
 
 
 def main():
-    for sample in ['ESCCOL100','CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA']:
+    #'ESCCOL100','CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172',
+    for sample in ['STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA']:
         print(sample)
         specie = re.split(r'(?=\d)', sample)[0]
         cond_list = extract_detected_features(sample_name=sample,img_path=f'data/image/{sample}.pkl',
