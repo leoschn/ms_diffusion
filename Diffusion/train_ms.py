@@ -1,5 +1,3 @@
-
-
 import os
 from typing import Dict
 
@@ -13,23 +11,17 @@ from torchvision.utils import save_image
 
 from Diffusion import GaussianDiffusionSampler, GaussianDiffusionTrainer
 from Diffusion import UNet
+from dataset.ms_dataset import ms_dataset
 from scheduler import GradualWarmupScheduler
-
 
 def train(modelConfig: Dict):
     device = torch.device(modelConfig["device"])
     # dataset
-    dataset = CIFAR10(
-        root='./CIFAR10', train=True, download=True,
-        transform=transforms.Compose([
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ]))
+    dataset = ms_dataset(modelConfig["dataset"])
     dataloader = DataLoader(
         dataset, batch_size=modelConfig["batch_size"], shuffle=True, num_workers=4, drop_last=True, pin_memory=True)
 
-    # model setup
+    # Diffusion setup
     net_model = UNet(T=modelConfig["T"], ch=modelConfig["channel"], ch_mult=modelConfig["channel_mult"], attn=modelConfig["attn"],
                      num_res_blocks=modelConfig["num_res_blocks"], dropout=modelConfig["dropout"]).to(device)
     if modelConfig["training_load_weight"] is not None:
@@ -47,11 +39,11 @@ def train(modelConfig: Dict):
     # start training
     for e in range(modelConfig["epoch"]):
         with tqdm(dataloader, dynamic_ncols=True) as tqdmDataLoader:
-            for images, labels in tqdmDataLoader:
+            for images, cond in tqdmDataLoader:
                 # train
                 optimizer.zero_grad()
                 x_0 = images.to(device)
-                loss = trainer(x_0).sum() / 1000.
+                loss = trainer(x_0,cond).sum() / 1000.
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(
                     net_model.parameters(), modelConfig["grad_clip"])
@@ -68,7 +60,10 @@ def train(modelConfig: Dict):
 
 
 def eval(modelConfig: Dict):
-    # load model and evaluate
+    # eval dataset loading
+
+
+    # load Diffusion and evaluate
     with torch.no_grad():
         device = torch.device(modelConfig["device"])
         model = UNet(T=modelConfig["T"], ch=modelConfig["channel"], ch_mult=modelConfig["channel_mult"], attn=modelConfig["attn"],
@@ -76,7 +71,7 @@ def eval(modelConfig: Dict):
         ckpt = torch.load(os.path.join(
             modelConfig["save_weight_dir"], modelConfig["test_load_weight"]), map_location=device)
         model.load_state_dict(ckpt)
-        print("model load weight done.")
+        print("Diffusion load weight done.")
         model.eval()
         sampler = GaussianDiffusionSampler(
             model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
@@ -86,7 +81,7 @@ def eval(modelConfig: Dict):
         saveNoisy = torch.clamp(noisyImage * 0.5 + 0.5, 0, 1)
         save_image(saveNoisy, os.path.join(
             modelConfig["sampled_dir"], modelConfig["sampledNoisyImgName"]), nrow=modelConfig["nrow"])
-        sampledImgs = sampler(noisyImage)
+        sampledImgs = sampler(noisyImage, cond)
         sampledImgs = sampledImgs * 0.5 + 0.5  # [0 ~ 1]
         save_image(sampledImgs, os.path.join(
             modelConfig["sampled_dir"],  modelConfig["sampledImgName"]), nrow=modelConfig["nrow"])
