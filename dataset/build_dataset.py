@@ -155,12 +155,12 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
 
 def build_training_pairs():
     for sample in ['ESCCOL100','CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA']:
-        img_data = pickle.load(open(f'../data/image/{sample}.pkl', 'rb'))['image']
-        cond_data = pickle.load(open(f'../data/conditioning/{sample}/conditioning_list.pkl', 'rb'))
+        img_data = pickle.load(open(f'data/image/{sample}.pkl', 'rb'))['image']
+        cond_data = pickle.load(open(f'data/conditioning/{sample}/conditioning_list.pkl', 'rb'))
         for window in range(1,len(img_data)):
             img = img_data[window]
             cond = cond_data[window-1]
-            with open(f'../data/processed_pairs/{sample}_ms2_{window}.pkl', 'wb') as f:
+            with open(f'data/processed_pairs/{sample}_ms2_{window}.pkl', 'wb') as f:
                 pickle.dump((img,cond), f)
 
 def plot_random_pairs():
