@@ -67,7 +67,7 @@ if __name__ == '__main__':
         "beta_T": 0.02,
         "img_size": 32,
         "grad_clip": 1.,
-        "device": "gpu:0",  ### MAKE SURE YOU HAVE A GPU !!!
+        "device": "cuda:0",  ### MAKE SURE YOU HAVE A GPU !!!
         "training_load_weight": None,
         "save_weight_dir": "./Checkpoints/",
         "test_load_weight": "ckpt_199_.pt",
