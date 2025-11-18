@@ -3,7 +3,7 @@ import os
 import pickle
 from pathlib import Path
 from typing import Union, Optional, Callable
-
+import torchvision.transforms as transforms
 from torchvision.datasets import DatasetFolder
 from tqdm import tqdm
 
@@ -14,17 +14,20 @@ def pkl_loader(path):
 
 class ms_dataset(DatasetFolder):
     def __init__(self, root):
-        self.root = self.root
-        self.instances = self.make_dataset(root,'.pkl')
+        self.root = root
+        self.instances = self.make_dataset('.pkl')
         self.loader = pkl_loader
+        self.transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((512,2048))])
 
     def __getitem__(self, index: int):
-        path = self.samples[index]
+
+        path = self.instances[index]
         sample = self.loader(path)
-        if self.transform is not None:
-            sample = self.transform(sample)
         image = sample[0]
         cond = sample[1]
+        if self.transform is not None:
+            image = self.transform(image)
+            cond = self.transform(cond)
         return image, cond
 
     def __len__(self):
@@ -38,4 +41,5 @@ class ms_dataset(DatasetFolder):
                 instances.append(file_name)
 
         return instances
+
 
