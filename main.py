@@ -53,7 +53,7 @@ if __name__ == '__main__':
     modelConfig = {
         'dataset': 'data/processed_pairs',
         "state": "train",  # or eval
-        "epoch": 200,
+        "epoch": 2,
         "batch_size": 1,
         "T": 1000,
         "channel": 128,
