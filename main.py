@@ -87,6 +87,13 @@ if __name__ == '__main__':
     os.environ["WORLD_SIZE"] = str(world_size)
     os.environ["LOCAL_RANK"] = str(local_rank)
 
+    nodelist = os.environ["SLURM_JOB_NODELIST"]
+    master_addr = os.popen(f"scontrol show hostname {nodelist} | head -n1").read().strip()
+    os.environ["MASTER_ADDR"] = master_addr
+    os.environ["MASTER_PORT"] = "29500"
+
+
+
     init_process_group(backend='nccl')
     torch.cuda.set_device(local_rank)
 
