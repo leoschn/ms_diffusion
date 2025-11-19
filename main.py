@@ -79,8 +79,8 @@ if __name__ == '__main__':
         "nrow": 8
     }
 
-    local_rank = int(os.environ['LOCAL_RANK'])
-    global_rank = int(os.environ['RANK'])
+    local_rank = int(os.environ["SLURM_LOCALID"])
+    rank = int(os.environ["SLURM_PROCID"])
     init_process_group(backend='nccl')
     torch.cuda.set_device(local_rank)
 
