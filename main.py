@@ -4,7 +4,9 @@ import pickle
 
 import torch
 from torch import optim
+from torch.distributed import init_process_group, destroy_process_group
 from torch.utils.data import DataLoader
+from torchvision.datasets.samplers import DistributedSampler
 from tqdm import tqdm
 
 from Diffusion import train_ms, GaussianDiffusionTrainer_ms
@@ -53,7 +55,7 @@ if __name__ == '__main__':
     modelConfig = {
         'dataset': 'data/processed_pairs',
         "state": "train",  # or eval
-        "epoch": 2,
+        "epoch": 10,
         "batch_size": 1,
         "T": 1000,
         "channel": 128,
@@ -76,30 +78,62 @@ if __name__ == '__main__':
         "sampledImgName": "SampledNoGuidenceImgs.png",
         "nrow": 8
     }
+
+    local_rank = int(os.environ['LOCAL_RANK'])
+    global_rank = int(os.environ['RANK'])
+    init_process_group(backend='nccl')
+    torch.cuda.set_device(local_rank)
+
     device = torch.device(modelConfig["device"])
     dataset = ms_dataset(root=modelConfig["dataset"])
     dataloader = DataLoader(
-        dataset, batch_size=modelConfig["batch_size"], shuffle=True, num_workers=4, drop_last=True, pin_memory=True)
+        dataset, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=4, drop_last=True, pin_memory=True,sampler=DistributedSampler(dataset,shuffle=True))
+
     net_model = UNet(T=modelConfig["T"], ch=modelConfig["channel"], ch_mult=modelConfig["channel_mult"],
                      attn=modelConfig["attn"],
                      num_res_blocks=modelConfig["num_res_blocks"], dropout=modelConfig["dropout"]).to(device)
+    net_model = torch.nn.parallel.DataParallel(net_model)
+
+
     if modelConfig["training_load_weight"] is not None:
-        net_model.load_state_dict(torch.load(os.path.join(
+        net_model.module.load_state_dict(torch.load(os.path.join(
             modelConfig["save_weight_dir"], modelConfig["training_load_weight"]), map_location=device))
     optimizer = torch.optim.AdamW(
-        net_model.parameters(), lr=modelConfig["lr"], weight_decay=1e-4)
+        net_model.module.parameters(), lr=modelConfig["lr"], weight_decay=1e-4)
     cosineScheduler = optim.lr_scheduler.CosineAnnealingLR(
         optimizer=optimizer, T_max=modelConfig["epoch"], eta_min=0, last_epoch=-1)
     warmUpScheduler = GradualWarmupScheduler(
         optimizer=optimizer, multiplier=modelConfig["multiplier"], warm_epoch=modelConfig["epoch"] // 10,
         after_scheduler=cosineScheduler)
     trainer = GaussianDiffusionTrainer_ms(
-        net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
+        net_model.module, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
 
     # start training
     for e in range(modelConfig["epoch"]):
-        with tqdm(dataloader, dynamic_ncols=True) as tqdmDataLoader:
-            for images, cond in tqdmDataLoader:
+        if global_rank == 0:
+            with tqdm(dataloader, dynamic_ncols=True) as tqdmDataLoader:
+                for images, cond in tqdmDataLoader:
+                    # train
+                    optimizer.zero_grad()
+                    cond = cond.float().to(device)
+                    x_0 = images.float().to(device)
+
+                    loss = trainer(x_0, cond).sum() / 1000.
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(
+                        net_model.module.parameters(), modelConfig["grad_clip"])
+                    optimizer.step()
+                    tqdmDataLoader.set_postfix(ordered_dict={
+                        "epoch": e,
+                        "loss: ": loss.item(),
+                        "img shape: ": x_0.shape,
+                        "LR": optimizer.state_dict()['param_groups'][0]["lr"]
+                    })
+            warmUpScheduler.step()
+            torch.save(net_model.module.state_dict(), os.path.join(
+                modelConfig["save_weight_dir"], 'ckpt_' + str(e) + "_.pt"))
+        else :
+            for images, cond in DataLoader:
                 # train
                 optimizer.zero_grad()
                 cond = cond.float().to(device)
@@ -108,7 +142,7 @@ if __name__ == '__main__':
                 loss = trainer(x_0, cond).sum() / 1000.
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(
-                    net_model.parameters(), modelConfig["grad_clip"])
+                    net_model.module.parameters(), modelConfig["grad_clip"])
                 optimizer.step()
                 tqdmDataLoader.set_postfix(ordered_dict={
                     "epoch": e,
@@ -117,5 +151,5 @@ if __name__ == '__main__':
                     "LR": optimizer.state_dict()['param_groups'][0]["lr"]
                 })
         warmUpScheduler.step()
-        torch.save(net_model.state_dict(), os.path.join(
-            modelConfig["save_weight_dir"], 'ckpt_' + str(e) + "_.pt"))
+
+    destroy_process_group()
