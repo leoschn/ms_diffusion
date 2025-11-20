@@ -123,7 +123,7 @@ if __name__ == '__main__':
 
     # start training
     for e in range(modelConfig["epoch"]):
-        if global_rank == 0:
+        if rank == 0:
             with tqdm(dataloader, dynamic_ncols=True) as tqdmDataLoader:
                 for images, cond in tqdmDataLoader:
                     # train
