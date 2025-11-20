@@ -9,18 +9,20 @@ from torch.utils.data import DataLoader
 from torchvision.datasets.samplers import DistributedSampler
 from tqdm import tqdm
 
-from Diffusion import train_ms, GaussianDiffusionTrainer_ms
+from Diffusion import train_ms, GaussianDiffusionTrainer_ms, eval_ms
 from Diffusion.model_ms import UNet
 from dataset.ms_dataset import ms_dataset
 from scheduler import GradualWarmupScheduler
 
 
 def main(model_config = None):
+
     modelConfig = {
-        'dataset': 'data/processed_pairs',
-        "state": "train", # or eval
-        "epoch": 200,
-        "batch_size": 80,
+        'dataset_train': 'data/processed_pairs/train',
+        'dataset_test': 'data/processed_pairs/test',
+        "state": "train",  # or eval
+        "epoch": 10,
+        "batch_size": 1,
         "T": 1000,
         "channel": 128,
         "channel_mult": [1, 2, 3, 4],
@@ -33,7 +35,7 @@ def main(model_config = None):
         "beta_T": 0.02,
         "img_size": 32,
         "grad_clip": 1.,
-        "device": "cpu", ### MAKE SURE YOU HAVE A GPU !!!
+        "device": "cuda:0",  ### MAKE SURE YOU HAVE A GPU !!!
         "training_load_weight": None,
         "save_weight_dir": "./Checkpoints/",
         "test_load_weight": "ckpt_199_.pt",
@@ -41,19 +43,21 @@ def main(model_config = None):
         "sampledNoisyImgName": "NoisyNoGuidenceImgs.png",
         "sampledImgName": "SampledNoGuidenceImgs.png",
         "nrow": 8
-        }
+    }
     if model_config is not None:
         modelConfig = model_config
     if modelConfig["state"] == "train":
         train_ms(modelConfig)
-    # else:
-    #     eval_ms(modelConfig)
+    else:
+        eval_ms(modelConfig)
 
 
 if __name__ == '__main__':
-    # main()
+
+
     modelConfig = {
-        'dataset': 'data/processed_pairs',
+        'dataset_train': 'data/processed_pairs/train',
+        'dataset_test': 'data/processed_pairs/test',
         "state": "train",  # or eval
         "epoch": 10,
         "batch_size": 1,
@@ -98,7 +102,7 @@ if __name__ == '__main__':
     torch.cuda.set_device(local_rank)
 
     device = torch.device(modelConfig["device"])
-    dataset = ms_dataset(root=modelConfig["dataset"])
+    dataset = ms_dataset(root=modelConfig["dataset_train"])
     dataloader = DataLoader(
         dataset, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=4, drop_last=True, pin_memory=True,sampler=DistributedSampler(dataset,shuffle=True))
 
