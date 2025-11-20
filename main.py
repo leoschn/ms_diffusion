@@ -146,7 +146,7 @@ if __name__ == '__main__':
             torch.save(net_model.module.state_dict(), os.path.join(
                 modelConfig["save_weight_dir"], 'ckpt_' + str(e) + "_.pt"))
         else :
-            for images, cond in DataLoader:
+            for images, cond in dataloader:
                 # train
                 optimizer.zero_grad()
                 cond = cond.float().to(device)
