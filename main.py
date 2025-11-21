@@ -110,21 +110,23 @@ if __name__ == '__main__':
     net_model = UNet(T=modelConfig["T"], ch=modelConfig["channel"], ch_mult=modelConfig["channel_mult"],
                      attn=modelConfig["attn"],
                      num_res_blocks=modelConfig["num_res_blocks"], dropout=modelConfig["dropout"]).to(device)
-    net_model = torch.nn.parallel.DistributedDataParallel(net_model)
+    net_model = torch.nn.parallel.DistributedDataParallel(net_model,device_ids=[local_rank],
+    output_device=local_rank)
+
 
 
     if modelConfig["training_load_weight"] is not None:
         net_model.module.load_state_dict(torch.load(os.path.join(
             modelConfig["save_weight_dir"], modelConfig["training_load_weight"]), map_location=device))
     optimizer = torch.optim.AdamW(
-        net_model.module.parameters(), lr=modelConfig["lr"], weight_decay=1e-4)
+        net_model.parameters(), lr=modelConfig["lr"], weight_decay=1e-4)
     cosineScheduler = optim.lr_scheduler.CosineAnnealingLR(
         optimizer=optimizer, T_max=modelConfig["epoch"], eta_min=0, last_epoch=-1)
     warmUpScheduler = GradualWarmupScheduler(
         optimizer=optimizer, multiplier=modelConfig["multiplier"], warm_epoch=modelConfig["epoch"] // 10,
         after_scheduler=cosineScheduler)
     trainer = GaussianDiffusionTrainer_ms(
-        net_model.module, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
+        net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
 
     # start training
     for e in range(modelConfig["epoch"]):
@@ -142,16 +144,17 @@ if __name__ == '__main__':
             loss = trainer(x_0, cond).sum() / 1000.
             loss.backward()
             torch.nn.utils.clip_grad_norm_(
-                net_model.module.parameters(), modelConfig["grad_clip"])
+                net_model.parameters(), modelConfig["grad_clip"])
             optimizer.step()
             if rank == 0:
+                lr = warmUpScheduler.get_last_lr()[0]
                 pbar.set_postfix(ordered_dict={
                     "epoch": e,
                     "loss: ": loss.item(),
                     "img shape: ": x_0.shape,
-                    "LR": optimizer.state_dict()['param_groups'][0]["lr"]
+                    "LR": lr
                 })
-    warmUpScheduler.step()
+        warmUpScheduler.step()
     if rank == 0:
         torch.save(net_model.module.state_dict(), os.path.join(
             modelConfig["save_weight_dir"], 'ckpt_' + str(e) + "_.pt"))
