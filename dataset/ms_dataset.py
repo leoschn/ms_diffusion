@@ -17,7 +17,7 @@ class ms_dataset(DatasetFolder):
         self.root = root
         self.instances = self.make_dataset('.pkl')
         self.loader = pkl_loader
-        self.transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((512,2056))])
+        self.transform = transforms.Compose([transforms.ToTensor(),transforms.Resize((512,1024))])
 
     def __getitem__(self, index: int):
 
