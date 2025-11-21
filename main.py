@@ -101,15 +101,16 @@ if __name__ == '__main__':
     init_process_group(backend='nccl')
     torch.cuda.set_device(local_rank)
 
-    device = torch.device(modelConfig["device"])
+    device = torch.device(f"cuda:{local_rank}")
     dataset = ms_dataset(root=modelConfig["dataset_train"])
+    sampler=DistributedSampler(dataset,shuffle=True)
     dataloader = DataLoader(
-        dataset, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=4, drop_last=True, pin_memory=True,sampler=DistributedSampler(dataset,shuffle=True))
+        dataset, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=4, drop_last=True, pin_memory=True,sampler=sampler)
 
     net_model = UNet(T=modelConfig["T"], ch=modelConfig["channel"], ch_mult=modelConfig["channel_mult"],
                      attn=modelConfig["attn"],
                      num_res_blocks=modelConfig["num_res_blocks"], dropout=modelConfig["dropout"]).to(device)
-    net_model = torch.nn.parallel.DataParallel(net_model)
+    net_model = torch.nn.parallel.DistributedDataParallel(net_model)
 
 
     if modelConfig["training_load_weight"] is not None:
@@ -127,46 +128,32 @@ if __name__ == '__main__':
 
     # start training
     for e in range(modelConfig["epoch"]):
+        sampler.set_epoch(e)
         if rank == 0:
-            with tqdm(dataloader, dynamic_ncols=True) as tqdmDataLoader:
-                for images, cond in tqdmDataLoader:
-                    # train
-                    optimizer.zero_grad()
-                    cond = cond.float().to(device)
-                    x_0 = images.float().to(device)
-
-                    loss = trainer(x_0, cond).sum() / 1000.
-                    loss.backward()
-                    torch.nn.utils.clip_grad_norm_(
-                        net_model.module.parameters(), modelConfig["grad_clip"])
-                    optimizer.step()
-                    tqdmDataLoader.set_postfix(ordered_dict={
-                        "epoch": e,
-                        "loss: ": loss.item(),
-                        "img shape: ": x_0.shape,
-                        "LR": optimizer.state_dict()['param_groups'][0]["lr"]
-                    })
-            warmUpScheduler.step()
-            torch.save(net_model.module.state_dict(), os.path.join(
-                modelConfig["save_weight_dir"], 'ckpt_' + str(e) + "_.pt"))
+            pbar = tqdm(dataloader, dynamic_ncols=True)
         else :
-            for images, cond in dataloader:
-                # train
-                optimizer.zero_grad()
-                cond = cond.float().to(device)
-                x_0 = images.float().to(device)
+            pbar = dataloader
+        for images, cond in pbar:
+            # train
+            optimizer.zero_grad()
+            cond = cond.float().to(device)
+            x_0 = images.float().to(device)
 
-                loss = trainer(x_0, cond).sum() / 1000.
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(
-                    net_model.module.parameters(), modelConfig["grad_clip"])
-                optimizer.step()
-                tqdmDataLoader.set_postfix(ordered_dict={
+            loss = trainer(x_0, cond).sum() / 1000.
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(
+                net_model.module.parameters(), modelConfig["grad_clip"])
+            optimizer.step()
+            if rank == 0:
+                pbar.set_postfix(ordered_dict={
                     "epoch": e,
                     "loss: ": loss.item(),
                     "img shape: ": x_0.shape,
                     "LR": optimizer.state_dict()['param_groups'][0]["lr"]
                 })
-        warmUpScheduler.step()
+    warmUpScheduler.step()
+    if rank == 0:
+        torch.save(net_model.module.state_dict(), os.path.join(
+            modelConfig["save_weight_dir"], 'ckpt_' + str(e) + "_.pt"))
 
     destroy_process_group()
