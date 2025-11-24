@@ -150,9 +150,11 @@ if __name__ == '__main__':
 
                 loss = trainer(x_0, cond).sum() / 1000.
             scaler.scale(loss).backward()
+            scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(
                 net_model.parameters(), modelConfig["grad_clip"])
             scaler.step(optimizer)
+            scaler.update()
             if rank == 0:
                 lr = warmUpScheduler.get_lr()[0]
                 pbar.set_postfix(ordered_dict={
@@ -162,7 +164,7 @@ if __name__ == '__main__':
                     "LR": lr
                 })
         warmUpScheduler.step()
-        scaler.update()
+
     if rank == 0:
         torch.save(net_model.module.state_dict(), os.path.join(
             modelConfig["save_weight_dir"], 'ckpt_' + str(e) + "_.pt"))
