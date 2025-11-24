@@ -130,56 +130,56 @@ def train_ms(modelConfig: Dict):
         if e%modelConfig["inter_eval"]==0:
             net_model.eval()
 
+            with torch.no_grad():
+                if rank == 0:
+                    with tqdm(dataloader_test, dynamic_ncols=True) as tqdmDataLoader:
+                        n_image=0
+                        for images, cond in tqdmDataLoader:
+                            total_mse=0
+                            total_psnr=0
 
-            if rank == 0:
-                with tqdm(dataloader_test, dynamic_ncols=True) as tqdmDataLoader:
-                    n_image=0
-                    for images, cond in tqdmDataLoader:
-                        total_mse=0
-                        total_psnr=0
+
+                            with autocast(device_type='cuda', dtype=torch.float16):
+                                cond = cond.float().to(device)
+                                images = images.float().to(device)
+                                noisyImage = torch.randn(
+                                    size=[modelConfig["batch_size"], 1,  256, 1024], device=device)
+                                sampledImgs = sampler(noisyImage, cond)
+                            mse_loss = mse_loss_fct(sampledImgs, images)
+                            psnr_loss = 10 * torch.log10(1 / mse_loss)
 
 
+                            total_mse += mse_loss.item()
+                            total_psnr += psnr_loss.item()
+
+
+                            save_image(sampledImgs, os.path.join(
+                                modelConfig["sampled_dir"],  modelConfig["sampledImgName"]+str(rank)+'_'+str(n_image)), nrow=modelConfig["nrow"])
+                            n_image += 1
+                else :
+                    n_image = 0
+                    for images, cond in dataloader_test:
+                        total_mse = 0
+                        total_psnr = 0
                         with autocast(device_type='cuda', dtype=torch.float16):
                             cond = cond.float().to(device)
                             images = images.float().to(device)
                             noisyImage = torch.randn(
-                                size=[modelConfig["batch_size"], 1,  256, 1024], device=device)
+                                size=[modelConfig["batch_size"], 1, 256, 1024], device=device)
                             sampledImgs = sampler(noisyImage, cond)
+
                         mse_loss = mse_loss_fct(sampledImgs, images)
                         psnr_loss = 10 * torch.log10(1 / mse_loss)
-
 
                         total_mse += mse_loss.item()
                         total_psnr += psnr_loss.item()
 
-
                         save_image(sampledImgs, os.path.join(
-                            modelConfig["sampled_dir"],  modelConfig["sampledImgName"]+str(rank)+'_'+str(n_image)), nrow=modelConfig["nrow"])
+                            modelConfig["sampled_dir"], modelConfig["sampledImgName"] + str(rank) + '_' + str(n_image)),
+                                   nrow=modelConfig["nrow"])
                         n_image += 1
-            else :
-                n_image = 0
-                for images, cond in dataloader_test:
-                    total_mse = 0
-                    total_psnr = 0
-                    with autocast(device_type='cuda', dtype=torch.float16):
-                        cond = cond.float().to(device)
-                        images = images.float().to(device)
-                        noisyImage = torch.randn(
-                            size=[modelConfig["batch_size"], 1, 256, 1024], device=device)
-                        sampledImgs = sampler(noisyImage, cond)
-
-                    mse_loss = mse_loss_fct(sampledImgs, images)
-                    psnr_loss = 10 * torch.log10(1 / mse_loss)
-
-                    total_mse += mse_loss.item()
-                    total_psnr += psnr_loss.item()
-
-                    save_image(sampledImgs, os.path.join(
-                        modelConfig["sampled_dir"], modelConfig["sampledImgName"] + str(rank) + '_' + str(n_image)),
-                               nrow=modelConfig["nrow"])
-                    n_image += 1
-                    print(f"mse loss gpe {rank}: ", total_mse/n_image)
-                    print(f"psnr loss: {rank}", total_psnr/n_image)
+                        print(f"mse loss gpe {rank}: ", total_mse/n_image)
+                        print(f"psnr loss: {rank}", total_psnr/n_image)
 
 
     destroy_process_group()
