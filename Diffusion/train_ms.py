@@ -88,10 +88,10 @@ def train_ms(modelConfig: Dict):
 
     # start training
     for e in range(modelConfig["epoch"]):
-
+        total_loss = 0
         sampler_train.set_epoch(e)
         if rank == 0:
-            total_loss = 0
+
             i = 0
             pbar = tqdm(dataloader_train, dynamic_ncols=True)
         else :
