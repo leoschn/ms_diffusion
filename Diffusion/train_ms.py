@@ -141,7 +141,7 @@ def train_ms(modelConfig: Dict):
 
                         with autocast(device_type='cuda', dtype=torch.float16):
                             noisyImage = torch.randn(
-                                size=[modelConfig["batch_size"], 1, 512, 2056], device=device)
+                                size=[modelConfig["batch_size"], 1,  256, 1024], device=device)
                             sampledImgs = sampler(noisyImage, cond)
                         mse_loss = mse_loss_fct(sampledImgs, images)
                         psnr_loss = 10 * torch.log10(1 / mse_loss)
@@ -161,7 +161,7 @@ def train_ms(modelConfig: Dict):
                     total_psnr = 0
                     with autocast(device_type='cuda', dtype=torch.float16):
                         noisyImage = torch.randn(
-                            size=[modelConfig["batch_size"], 1, 512, 2056], device=device)
+                            size=[modelConfig["batch_size"], 1, 256, 1024], device=device)
                         sampledImgs = sampler(noisyImage, cond)
 
                     mse_loss = mse_loss_fct(sampledImgs, images)
@@ -246,7 +246,7 @@ def eval_ms(modelConfig: Dict):
 
                     with autocast(device_type='cuda', dtype=torch.float16):
                         noisyImage = torch.randn(
-                            size=[modelConfig["batch_size"], 1, 512, 2056], device=device)
+                            size=[modelConfig["batch_size"], 1, 256, 1024], device=device)
                         sampledImgs = sampler(noisyImage, cond)
                     mse_loss = mse_loss_fct(sampledImgs, images)
                     psnr_loss = 10 * torch.log10(1 / mse_loss)
@@ -267,7 +267,7 @@ def eval_ms(modelConfig: Dict):
                 total_psnr = 0
                 with autocast(device_type='cuda', dtype=torch.float16):
                     noisyImage = torch.randn(
-                        size=[modelConfig["batch_size"], 1, 512, 2056], device=device)
+                        size=[modelConfig["batch_size"], 1, 256, 1024], device=device)
                     sampledImgs = sampler(noisyImage, cond)
 
                 mse_loss = mse_loss_fct(sampledImgs, images)
