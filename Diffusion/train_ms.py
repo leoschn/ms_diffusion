@@ -88,12 +88,16 @@ def train_ms(modelConfig: Dict):
 
     # start training
     for e in range(modelConfig["epoch"]):
+
         sampler_train.set_epoch(e)
         if rank == 0:
+            total_loss = 0
+            i = 0
             pbar = tqdm(dataloader_train, dynamic_ncols=True)
         else :
             pbar = dataloader_train
         for images, cond in pbar:
+
             # train
             optimizer.zero_grad()
             with autocast(device_type='cuda', dtype=torch.float16):
@@ -101,6 +105,7 @@ def train_ms(modelConfig: Dict):
                 x_0 = images.float().to(device)
 
                 loss = trainer(x_0, cond).sum() / 1000.
+                total_loss += loss.item()
             scaler.scale(loss).backward()
             scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(
@@ -108,10 +113,11 @@ def train_ms(modelConfig: Dict):
             scaler.step(optimizer)
             scaler.update()
             if rank == 0:
+                i += 1
                 lr = warmUpScheduler.get_lr()[0]
                 pbar.set_postfix(ordered_dict={
                     "epoch": e,
-                    "loss: ": loss.item(),
+                    "loss: ": total_loss/i,
                     "img shape: ": x_0.shape,
                     "LR": lr
                 })
