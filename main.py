@@ -4,6 +4,7 @@ import pickle
 
 import torch
 from torch import optim
+from torch.cuda.amp import GradScaler, autocast
 from torch.distributed import init_process_group, destroy_process_group
 from torch.utils.data import DataLoader
 from torchvision.datasets.samplers import DistributedSampler
@@ -100,12 +101,12 @@ if __name__ == '__main__':
 
     init_process_group(backend='nccl')
     torch.cuda.set_device(local_rank)
-
+    scaler = GradScaler()
     device = torch.device(f"cuda:{local_rank}")
     dataset = ms_dataset(root=modelConfig["dataset_train"])
     sampler=DistributedSampler(dataset,shuffle=True)
     dataloader = DataLoader(
-        dataset, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=4, drop_last=True, pin_memory=True,sampler=sampler)
+        dataset, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=3, drop_last=True, pin_memory=True,sampler=sampler)
 
     net_model = UNet(T=modelConfig["T"], ch=modelConfig["channel"], ch_mult=modelConfig["channel_mult"],
                      attn=modelConfig["attn"],
@@ -138,14 +139,15 @@ if __name__ == '__main__':
         for images, cond in pbar:
             # train
             optimizer.zero_grad()
-            cond = cond.float().to(device)
-            x_0 = images.float().to(device)
+            with autocast(device_type='cuda', dtype=torch.float16):
+                cond = cond.float().to(device)
+                x_0 = images.float().to(device)
 
-            loss = trainer(x_0, cond).sum() / 1000.
-            loss.backward()
+                loss = trainer(x_0, cond).sum() / 1000.
+            scaler.scale(loss).backward()
             torch.nn.utils.clip_grad_norm_(
                 net_model.parameters(), modelConfig["grad_clip"])
-            optimizer.step()
+            scaler.step(optimizer)
             if rank == 0:
                 lr = warmUpScheduler.get_last_lr()[0]
                 pbar.set_postfix(ordered_dict={
@@ -155,6 +157,7 @@ if __name__ == '__main__':
                     "LR": lr
                 })
         warmUpScheduler.step()
+        scaler.update()
     if rank == 0:
         torch.save(net_model.module.state_dict(), os.path.join(
             modelConfig["save_weight_dir"], 'ckpt_' + str(e) + "_.pt"))
