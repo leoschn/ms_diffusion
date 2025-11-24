@@ -140,6 +140,8 @@ def train_ms(modelConfig: Dict):
 
 
                         with autocast(device_type='cuda', dtype=torch.float16):
+                            cond = cond.float().to(device)
+                            images = images.float().to(device)
                             noisyImage = torch.randn(
                                 size=[modelConfig["batch_size"], 1,  256, 1024], device=device)
                             sampledImgs = sampler(noisyImage, cond)
@@ -160,6 +162,8 @@ def train_ms(modelConfig: Dict):
                     total_mse = 0
                     total_psnr = 0
                     with autocast(device_type='cuda', dtype=torch.float16):
+                        cond = cond.float().to(device)
+                        images = images.float().to(device)
                         noisyImage = torch.randn(
                             size=[modelConfig["batch_size"], 1, 256, 1024], device=device)
                         sampledImgs = sampler(noisyImage, cond)
