@@ -149,7 +149,7 @@ if __name__ == '__main__':
                 net_model.parameters(), modelConfig["grad_clip"])
             scaler.step(optimizer)
             if rank == 0:
-                lr = warmUpScheduler.get_last_lr()[0]
+                lr = warmUpScheduler.get_lr()[0]
                 pbar.set_postfix(ordered_dict={
                     "epoch": e,
                     "loss: ": loss.item(),
