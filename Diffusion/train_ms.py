@@ -154,7 +154,7 @@ def train_ms(modelConfig: Dict):
 
 
                             save_image(sampledImgs, os.path.join(
-                                modelConfig["sampled_dir"],  modelConfig["sampledImgName"]+str(rank)+'_'+str(n_image)), nrow=modelConfig["nrow"])
+                                modelConfig["sampled_dir"],  modelConfig["sampledImgName"]+str(rank)+'_'+str(n_image)+'.png'), nrow=modelConfig["nrow"])
                             n_image += 1
                 else :
                     n_image = 0
@@ -175,7 +175,7 @@ def train_ms(modelConfig: Dict):
                         total_psnr += psnr_loss.item()
 
                         save_image(sampledImgs, os.path.join(
-                            modelConfig["sampled_dir"], modelConfig["sampledImgName"] + str(rank) + '_' + str(n_image)),
+                            modelConfig["sampled_dir"], modelConfig["sampledImgName"] + str(rank) + '_' + str(n_image)+'.png'),
                                    nrow=modelConfig["nrow"])
                         n_image += 1
                         print(f"mse loss gpe {rank}: ", total_mse/n_image)
@@ -262,7 +262,7 @@ def eval_ms(modelConfig: Dict):
 
 
                     save_image(sampledImgs, os.path.join(
-                        modelConfig["sampled_dir"],  modelConfig["sampledImgName"]+str(rank)+'_'+str(n_image)), nrow=modelConfig["nrow"])
+                        modelConfig["sampled_dir"],  modelConfig["sampledImgName"]+str(rank)+'_'+str(n_image)+'.png'), nrow=modelConfig["nrow"])
                     n_image += 1
         else :
             n_image = 0
@@ -281,7 +281,7 @@ def eval_ms(modelConfig: Dict):
                 total_psnr += psnr_loss.item()
 
                 save_image(sampledImgs, os.path.join(
-                    modelConfig["sampled_dir"], modelConfig["sampledImgName"] + str(rank) + '_' + str(n_image)),
+                    modelConfig["sampled_dir"], modelConfig["sampledImgName"] + str(rank) + '_' + str(n_image)+'.png'),
                            nrow=modelConfig["nrow"])
                 n_image += 1
                 print(f"mse loss gpe {rank}: ", total_mse/n_image)

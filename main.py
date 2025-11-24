@@ -41,8 +41,8 @@ def main(model_config = None):
         "save_weight_dir": "./Checkpoints/",
         "test_load_weight": "ckpt_99_.pt",
         "sampled_dir": "./SampledImgs/",
-        "sampledNoisyImgName": "NoisyNoGuidenceImgs.png",
-        "sampledImgName": "SampledNoGuidenceImgs.png",
+        "sampledNoisyImgName": "NoisyNoGuidenceImgs",
+        "sampledImgName": "SampledNoGuidenceImgs",
         "nrow": 8,
         "inter_eval":1
     }
