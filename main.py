@@ -4,7 +4,7 @@ import pickle
 
 import torch
 from torch import optim
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 from torch.distributed import init_process_group, destroy_process_group
 from torch.utils.data import DataLoader
 from torchvision.datasets.samplers import DistributedSampler
