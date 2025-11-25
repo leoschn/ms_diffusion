@@ -28,7 +28,7 @@ class ms_dataset(DatasetFolder):
         if self.transform is not None:
             image = self.transform(image)
             cond = self.transform(cond)
-        return image, cond
+        return image, cond, path
 
     def __len__(self):
         return len(self.instances)

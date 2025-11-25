@@ -39,7 +39,7 @@ def main(model_config = None):
         "grad_clip": 1.,
         "training_load_weight": None,
         "save_weight_dir": "./Checkpoints/",
-        "test_load_weight": "ckpt_99_.pt",
+        "test_load_weight": "ckpt_199_.pt",
         "sampled_dir": "./SampledImgs/",
         "sampledNoisyImgName": "NoisyNoGuidenceImgs",
         "sampledImgName": "SampledNoGuidenceImgs",
