@@ -42,7 +42,7 @@ def main(model_config = None):
         "test_load_weight": "ckpt_199_.pt",
         "sampled_dir": "./SampledImgs/",
         "sampledNoisyImgName": "NoisyNoGuidenceImgs",
-        "sampledImgName": "SampledNoGuidenceImgs",
+        "sampledImgName": "sampled_ms_image",
         "nrow": 8,
         "inter_eval":20
     }

@@ -1,4 +1,5 @@
 import os
+import pickle
 from typing import Dict
 
 import torch
@@ -152,7 +153,10 @@ def train_ms(modelConfig: Dict):
                             total_mse += mse_loss.item()
                             total_psnr += psnr_loss.item()
 
-
+                            arr = sampledImgs.numpy()
+                            with open( os.path.join(
+                                modelConfig["sampled_dir"],  modelConfig["sampledImgName"]+str(rank)+'_'+str(n_image)+ '_'+ str(e)+'.pkl'),'wb') as f:
+                                pickle.dump(arr, f)
                             save_image(sampledImgs, os.path.join(
                                 modelConfig["sampled_dir"],  modelConfig["sampledImgName"]+str(rank)+'_'+str(n_image)+ '_'+ str(e)+'.png'), nrow=modelConfig["nrow"])
                             n_image += 1
