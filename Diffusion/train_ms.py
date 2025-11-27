@@ -154,7 +154,7 @@ def train_ms(modelConfig: Dict):
                             total_mse += mse_loss.item()
                             total_psnr += psnr_loss.item()
 
-                            arr = sampledImgs.numpy()
+                            arr = sampledImgs.cpu().numpy()
                             with open( os.path.join(
                                 modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'),'wb') as f:
                                 pickle.dump(arr, f)
@@ -180,7 +180,7 @@ def train_ms(modelConfig: Dict):
                         total_psnr += psnr_loss.item()
                         f_name = os.path.basename(path[0]).replace('.pkl', '')
 
-                        arr = sampledImgs.numpy()
+                        arr = sampledImgs.cpu().numpy()
                         with open(os.path.join(
                                 modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'), 'wb') as f:
                             pickle.dump(arr, f)
