@@ -136,8 +136,9 @@ def train_ms(modelConfig: Dict):
                 if rank == 0:
                     with tqdm(dataloader_test, dynamic_ncols=True) as tqdmDataLoader:
                         for images, cond ,path in tqdmDataLoader:
-                            print(f_name)
+
                             f_name = os.path.basename(path).replace('.pkl', '')
+                            print(f_name)
                             total_mse=0
                             total_psnr=0
 
