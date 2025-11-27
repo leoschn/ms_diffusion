@@ -137,7 +137,6 @@ def train_ms(modelConfig: Dict):
                         for images, cond ,path in tqdmDataLoader:
 
                             f_name = os.path.basename(path[0]).replace('.pkl', '')
-                            print(f_name)
                             total_mse=0
                             total_psnr=0
 

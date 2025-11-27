@@ -86,7 +86,6 @@ class GaussianDiffusionSampler_ms(nn.Module):
         """
         x_t = x_T
         for time_step in reversed(range(self.T)):
-            print(time_step)
             t = x_t.new_ones([x_T.shape[0], ], dtype=torch.long) * time_step
             mean, var= self.p_mean_variance(x_t=x_t, t=t,cond=cond)
             # no noise when t == 0
