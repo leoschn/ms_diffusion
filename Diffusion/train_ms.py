@@ -97,8 +97,7 @@ def train_ms(modelConfig: Dict):
             pbar = tqdm(dataloader_train, dynamic_ncols=True)
         else :
             pbar = dataloader_train
-        for images, cond, path in pbar:
-            print(path)
+        for images, cond, _ in pbar:
 
             # train
             optimizer.zero_grad()
@@ -137,7 +136,7 @@ def train_ms(modelConfig: Dict):
                     with tqdm(dataloader_test, dynamic_ncols=True) as tqdmDataLoader:
                         for images, cond ,path in tqdmDataLoader:
 
-                            f_name = os.path.basename(path).replace('.pkl', '')
+                            f_name = os.path.basename(path[0]).replace('.pkl', '')
                             print(f_name)
                             total_mse=0
                             total_psnr=0
@@ -157,8 +156,8 @@ def train_ms(modelConfig: Dict):
                             total_psnr += psnr_loss.item()
 
                             arr = sampledImgs.numpy()
-                            with open( o, os.path.join(
-                                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),'wb') as f:
+                            with open( os.path.join(
+                                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'),'wb') as f:
                                 pickle.dump(arr, f)
                             save_image(sampledImgs, os.path.join(
                                 modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),
@@ -180,7 +179,12 @@ def train_ms(modelConfig: Dict):
 
                         total_mse += mse_loss.item()
                         total_psnr += psnr_loss.item()
-                        f_name = os.path.basename(path).replace('.pkl', '')
+                        f_name = os.path.basename(path[0]).replace('.pkl', '')
+
+                        arr = sampledImgs.numpy()
+                        with open(os.path.join(
+                                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'), 'wb') as f:
+                            pickle.dump(arr, f)
 
                         save_image(sampledImgs, os.path.join(
                             modelConfig["sampled_dir"],f_name +'_'+ str(e)+ '.png'),
@@ -266,10 +270,10 @@ def eval_ms(modelConfig: Dict):
 
                     total_mse += mse_loss.item()
                     total_psnr += psnr_loss.item()
-                    f_name = os.path.basename(path)
+                    f_name = os.path.basename(path[0]).replace('.pkl', '')
 
                     save_image(sampledImgs, os.path.join(
-                        modelConfig["sampled_dir"],  path), nrow=modelConfig["nrow"])
+                        modelConfig["sampled_dir"],  f_name +'.png'), nrow=modelConfig["nrow"])
                     n_image += 1
         else :
             n_image = 0
