@@ -97,7 +97,8 @@ def train_ms(modelConfig: Dict):
             pbar = tqdm(dataloader_train, dynamic_ncols=True)
         else :
             pbar = dataloader_train
-        for images, cond, _ in pbar:
+        for images, cond, path in pbar:
+            print(path)
 
             # train
             optimizer.zero_grad()
@@ -134,8 +135,9 @@ def train_ms(modelConfig: Dict):
             with torch.no_grad():
                 if rank == 0:
                     with tqdm(dataloader_test, dynamic_ncols=True) as tqdmDataLoader:
-                        n_image=0
-                        for images, cond in tqdmDataLoader:
+                        for images, cond ,path in tqdmDataLoader:
+                            print(f_name)
+                            f_name = os.path.basename(path).replace('.pkl', '')
                             total_mse=0
                             total_psnr=0
 
@@ -154,12 +156,12 @@ def train_ms(modelConfig: Dict):
                             total_psnr += psnr_loss.item()
 
                             arr = sampledImgs.numpy()
-                            with open( os.path.join(
-                                modelConfig["sampled_dir"],  modelConfig["sampledImgName"]+str(rank)+'_'+str(n_image)+ '_'+ str(e)+'.pkl'),'wb') as f:
+                            with open( o, os.path.join(
+                                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),'wb') as f:
                                 pickle.dump(arr, f)
                             save_image(sampledImgs, os.path.join(
-                                modelConfig["sampled_dir"],  modelConfig["sampledImgName"]+str(rank)+'_'+str(n_image)+ '_'+ str(e)+'.png'), nrow=modelConfig["nrow"])
-                            n_image += 1
+                                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),
+                                       nrow=modelConfig["nrow"])
                 else :
                     n_image = 0
                     for images, cond,path in dataloader_test:
@@ -182,7 +184,6 @@ def train_ms(modelConfig: Dict):
                         save_image(sampledImgs, os.path.join(
                             modelConfig["sampled_dir"],f_name +'_'+ str(e)+ '.png'),
                                    nrow=modelConfig["nrow"])
-                        n_image += 1
                         print(f"mse loss gpe {rank}: ", total_mse/n_image)
                         print(f"psnr loss: {rank}", total_psnr/n_image)
 
