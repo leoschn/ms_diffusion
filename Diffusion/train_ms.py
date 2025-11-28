@@ -189,8 +189,8 @@ def train_ms(modelConfig: Dict):
                         save_image(sampledImgs, os.path.join(
                             modelConfig["sampled_dir"],f_name +'_'+ str(e)+ '.png'),
                                    nrow=modelConfig["nrow"])
-                        print(f"mse loss gpe {rank}: ", total_mse/n_image)
-                        print(f"psnr loss: {rank}", total_psnr/n_image)
+                        print(f"mse loss gpu {rank}: ", total_mse/n_image)
+                        print(f"psnr loss gpu {rank}:", total_psnr/n_image)
 
 
     destroy_process_group()
