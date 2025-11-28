@@ -165,6 +165,7 @@ def train_ms(modelConfig: Dict):
                     n_image = 0
                     for images, cond,path in dataloader_test:
                         total_mse = 0
+                        n_image+=len(path)
                         total_psnr = 0
                         with autocast(device_type='cuda', dtype=torch.float16):
                             cond = cond.float().to(device)
@@ -254,6 +255,7 @@ def eval_ms(modelConfig: Dict):
             with tqdm(dataloader_test, dynamic_ncols=True) as tqdmDataLoader:
                 n_image=0
                 for images, cond, path in tqdmDataLoader:
+                    n_image += len(path)
                     total_mse=0
                     total_psnr=0
 
@@ -273,10 +275,10 @@ def eval_ms(modelConfig: Dict):
 
                     save_image(sampledImgs, os.path.join(
                         modelConfig["sampled_dir"],  f_name +'.png'), nrow=modelConfig["nrow"])
-                    n_image += 1
         else :
             n_image = 0
-            for images, cond in dataloader_test:
+            for images, cond, path in dataloader_test:
+                n_image += len(path)
                 total_mse = 0
                 total_psnr = 0
                 with autocast(device_type='cuda', dtype=torch.float16):
@@ -293,7 +295,6 @@ def eval_ms(modelConfig: Dict):
                 save_image(sampledImgs, os.path.join(
                     modelConfig["sampled_dir"], modelConfig["sampledImgName"] + str(rank) + '_' + str(n_image)+'.png'),
                            nrow=modelConfig["nrow"])
-                n_image += 1
                 print(f"mse loss gpe {rank}: ", total_mse/n_image)
                 print(f"psnr loss: {rank}", total_psnr/n_image)
 
