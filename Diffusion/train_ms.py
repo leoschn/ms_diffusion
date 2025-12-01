@@ -132,6 +132,7 @@ def train_ms(modelConfig: Dict):
             net_model.eval()
 
             with torch.no_grad():
+                n_image = 0
                 if rank == 0:
                     with tqdm(dataloader_test, dynamic_ncols=True) as tqdmDataLoader:
                         for images, cond ,path in tqdmDataLoader:
@@ -154,6 +155,9 @@ def train_ms(modelConfig: Dict):
                             total_mse += mse_loss.item()
                             total_psnr += psnr_loss.item()
 
+                            print(f"mse loss gpu {rank} epoch {e}: ", total_mse / n_image)
+                            print(f"psnr loss gpu {rank} epoch {e}:", total_psnr / n_image)
+
                             arr = sampledImgs.cpu().numpy()
                             with open( os.path.join(
                                 modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'),'wb') as f:
@@ -162,7 +166,6 @@ def train_ms(modelConfig: Dict):
                                 modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),
                                        nrow=modelConfig["nrow"])
                 else :
-                    n_image = 0
                     for images, cond,path in dataloader_test:
                         total_mse = 0
                         n_image+=len(path)
@@ -189,8 +192,8 @@ def train_ms(modelConfig: Dict):
                         save_image(sampledImgs, os.path.join(
                             modelConfig["sampled_dir"],f_name +'_'+ str(e)+ '.png'),
                                    nrow=modelConfig["nrow"])
-                        print(f"mse loss gpu {rank}: ", total_mse/n_image)
-                        print(f"psnr loss gpu {rank}:", total_psnr/n_image)
+                        print(f"mse loss gpu {rank} epoch {e}: ", total_mse/n_image)
+                        print(f"psnr loss gpu {rank} epoch {e}:", total_psnr/n_image)
 
 
     destroy_process_group()
