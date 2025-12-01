@@ -77,8 +77,8 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
         conditioning_list.append(conditioning)
         print(conditioning.sum())
 
-    os.makedirs(f'../data/conditioning_v2/{sample_name}',exist_ok=True)
-    with open(f'../data/conditioning_v2/{sample_name}/conditioning_list.pkl', 'wb') as f:
+    os.makedirs(f'data/conditioning_v2/{sample_name}',exist_ok=True)
+    with open(f'data/conditioning_v2/{sample_name}/conditioning_list.pkl', 'wb') as f:
         pickle.dump(conditioning_list, f)
 
     return conditioning_list
@@ -112,9 +112,9 @@ def main():
     for sample in ['ESCCOL100','CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA']:
         print(sample)
         specie = re.split(r'(?=\d)', sample)[0]
-        cond_list = extract_detected_features(sample_name=sample,img_path=f'../data/image/{sample}.pkl',
-                                              chimerys_report_path=f'../data/chimerys/{sample}/psms.tsv',
-                                              diann_lib_path=f'../data/library/{specie}_universal_cont_blood.parquet',
+        cond_list = extract_detected_features(sample_name=sample,img_path=f'data/image/{sample}.pkl',
+                                              chimerys_report_path=f'data/chimerys/{sample}/psms.tsv',
+                                              diann_lib_path=f'data/library/{specie}_universal_cont_blood.parquet',
                                               fdr=0.05)
     # build_training_pairs()
 if __name__ == '__main__':
