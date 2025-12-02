@@ -92,7 +92,7 @@ def build_training_pairs(l,out_dir):
         for window in range(1,len(cond_data)+1):
             img = img_data[window]
             cond = cond_data[window-1]
-            with open(os.path.join(out_dir,f'{sample}_ms2_{window}.pkl', 'wb')) as f:
+            with open(os.path.join(out_dir,f'{sample}_ms2_{window}.pkl'), 'wb') as f:
                 pickle.dump((img,cond), f)
 
 def plot_random_pairs():
