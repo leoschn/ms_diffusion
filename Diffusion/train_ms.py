@@ -1,7 +1,7 @@
 import os
 import pickle
 from typing import Dict
-
+import wandb
 import torch
 import torch.optim as optim
 from torch.amp import autocast
@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import CIFAR10
 from torchvision.utils import save_image
+from wandb.cli.cli import offline
 
 from Diffusion import GaussianDiffusionSampler_ms, GaussianDiffusionTrainer_ms
 from Diffusion import UNet
@@ -67,7 +68,22 @@ def train_ms(modelConfig: Dict):
     net_model = torch.nn.parallel.DistributedDataParallel(net_model,device_ids=[local_rank],
     output_device=local_rank)
 
+    #wandb init
+    if rank == 0:
+        os.environ["WANDB_API_KEY"] = 'b4a27ac6b6145e1a5d0ee7f9e2e8c20bd101dccd'
 
+        os.environ["WANDB_MODE"] = "offline"
+        run = wandb.init(
+            # Set the wandb entity where your project will be logged (generally your team name).
+            entity="liris",
+            # Set the wandb project where this run will be logged.
+            project="ms diffusion",
+            # Track hyperparameters and run metadata.
+            config=modelConfig,
+            mode="offline",
+            name="train_ms_1",
+            dir = './wandb_run'
+        )
 
     if modelConfig["training_load_weight"] is not None:
         net_model.module.load_state_dict(torch.load(os.path.join(
@@ -122,6 +138,7 @@ def train_ms(modelConfig: Dict):
                     "img shape: ": x_0.shape,
                     "LR": lr
                 })
+        run.log({"epoch":e,"loss": total_loss/i,"LR": lr})
         warmUpScheduler.step()
 
         if rank == 0:
@@ -135,11 +152,12 @@ def train_ms(modelConfig: Dict):
                 n_image = 0
                 if rank == 0:
                     with tqdm(dataloader_test, dynamic_ncols=True) as tqdmDataLoader:
+                        total_mse = 0
+                        total_psnr = 0
                         for images, cond ,path in tqdmDataLoader:
 
                             f_name = os.path.basename(path[0]).replace('.pkl', '')
-                            total_mse=0
-                            total_psnr=0
+
 
 
                             with autocast(device_type='cuda', dtype=torch.float16):
@@ -155,8 +173,7 @@ def train_ms(modelConfig: Dict):
                             total_mse += mse_loss.item()
                             total_psnr += psnr_loss.item()
 
-                            print(f"mse loss gpu {rank} epoch {e}: ", total_mse / n_image)
-                            print(f"psnr loss gpu {rank} epoch {e}:", total_psnr / n_image)
+
 
                             arr = sampledImgs.cpu().numpy()
                             with open( os.path.join(
@@ -165,6 +182,13 @@ def train_ms(modelConfig: Dict):
                             save_image(sampledImgs, os.path.join(
                                 modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),
                                        nrow=modelConfig["nrow"])
+                            run.log({'sampled image': wandb.Image(os.path.join(
+                                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'))})
+                        print(f"mse loss gpu {rank} epoch {e}: ", total_mse / n_image)
+                        print(f"psnr loss gpu {rank} epoch {e}:", total_psnr / n_image)
+                        run.log({"epoch_eval": e, "loss_eval": total_mse / i,"psnr_eval": total_psnr / i})
+
+
                 else :
                     for images, cond,path in dataloader_test:
                         total_mse = 0
@@ -195,7 +219,8 @@ def train_ms(modelConfig: Dict):
                         print(f"mse loss gpu {rank} epoch {e}: ", total_mse/n_image)
                         print(f"psnr loss gpu {rank} epoch {e}:", total_psnr/n_image)
 
-
+    if rank == 0:
+        run.finish()
     destroy_process_group()
 
 def eval_ms(modelConfig: Dict):
