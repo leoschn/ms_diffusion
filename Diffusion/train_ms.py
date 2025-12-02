@@ -70,7 +70,9 @@ def train_ms(modelConfig: Dict):
 
     #wandb init
     if rank == 0:
-        os.environ["WANDB_API_KEY"] = 'b4a27ac6b6145e1a5d0ee7f9e2e8c20bd101dccd'
+        with open('wdb_key.txt', 'w') as f:
+            key = f.readline().strip()
+        os.environ["WANDB_API_KEY"] = key
 
         os.environ["WANDB_MODE"] = "offline"
         run = wandb.init(
