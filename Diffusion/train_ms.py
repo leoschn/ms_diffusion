@@ -70,7 +70,7 @@ def train_ms(modelConfig: Dict):
 
     #wandb init
     if rank == 0:
-        with open('wdb_key.txt', 'w') as f:
+        with open('wdb_key.txt', 'r') as f:
             key = f.readline().strip()
         os.environ["WANDB_API_KEY"] = key
 
