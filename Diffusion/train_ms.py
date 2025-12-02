@@ -140,7 +140,8 @@ def train_ms(modelConfig: Dict):
                     "img shape: ": x_0.shape,
                     "LR": lr
                 })
-        run.log({"epoch":e,"loss": total_loss/i,"LR": lr})
+        if rank == 0:
+            run.log({"epoch":e,"loss": total_loss/i,"LR": lr})
         warmUpScheduler.step()
 
         if rank == 0:
@@ -153,74 +154,46 @@ def train_ms(modelConfig: Dict):
             with torch.no_grad():
                 n_image = 0
                 if rank == 0:
-                    with tqdm(dataloader_test, dynamic_ncols=True) as tqdmDataLoader:
-                        total_mse = 0
-                        total_psnr = 0
-                        for images, cond ,path in tqdmDataLoader:
-
-                            f_name = os.path.basename(path[0]).replace('.pkl', '')
-
-
-
-                            with autocast(device_type='cuda', dtype=torch.float16):
-                                cond = cond.float().to(device)
-                                images = images.float().to(device)
-                                noisyImage = torch.randn(
-                                    size=[modelConfig["batch_size"], 1,  256, 1024], device=device)
-                                sampledImgs = sampler(noisyImage, cond)
-                            mse_loss = mse_loss_fct(sampledImgs, images)
-                            psnr_loss = 10 * torch.log10(1 / mse_loss)
-
-
-                            total_mse += mse_loss.item()
-                            total_psnr += psnr_loss.item()
-
-
-
-                            arr = sampledImgs.cpu().numpy()
-                            with open( os.path.join(
-                                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'),'wb') as f:
-                                pickle.dump(arr, f)
-                            save_image(sampledImgs, os.path.join(
-                                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),
-                                       nrow=modelConfig["nrow"])
-                            run.log({'sampled image': wandb.Image(os.path.join(
-                                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'))})
-                        print(f"mse loss gpu {rank} epoch {e}: ", total_mse / n_image)
-                        print(f"psnr loss gpu {rank} epoch {e}:", total_psnr / n_image)
-                        run.log({"epoch_eval": e, "loss_eval": total_mse / i,"psnr_eval": total_psnr / i})
-
-
+                    pbar_test =  tqdm(dataloader_test, dynamic_ncols=True)
                 else :
-                    for images, cond,path in dataloader_test:
-                        total_mse = 0
-                        n_image+=len(path)
-                        total_psnr = 0
-                        with autocast(device_type='cuda', dtype=torch.float16):
-                            cond = cond.float().to(device)
-                            images = images.float().to(device)
-                            noisyImage = torch.randn(
-                                size=[modelConfig["batch_size"], 1, 256, 1024], device=device)
-                            sampledImgs = sampler(noisyImage, cond)
+                    pbar_test = dataloader_test
+                total_mse = 0
+                total_psnr = 0
+                for images, cond ,path in pbar_test:
 
-                        mse_loss = mse_loss_fct(sampledImgs, images)
-                        psnr_loss = 10 * torch.log10(1 / mse_loss)
+                    f_name = os.path.basename(path[0]).replace('.pkl', '')
 
-                        total_mse += mse_loss.item()
-                        total_psnr += psnr_loss.item()
-                        f_name = os.path.basename(path[0]).replace('.pkl', '')
 
-                        arr = sampledImgs.cpu().numpy()
-                        with open(os.path.join(
-                                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'), 'wb') as f:
-                            pickle.dump(arr, f)
 
-                        save_image(sampledImgs, os.path.join(
-                            modelConfig["sampled_dir"],f_name +'_'+ str(e)+ '.png'),
-                                   nrow=modelConfig["nrow"])
-                        print(f"mse loss gpu {rank} epoch {e}: ", total_mse/n_image)
-                        print(f"psnr loss gpu {rank} epoch {e}:", total_psnr/n_image)
+                    with autocast(device_type='cuda', dtype=torch.float16):
+                        cond = cond.float().to(device)
+                        images = images.float().to(device)
+                        noisyImage = torch.randn(
+                            size=[modelConfig["batch_size"], 1,  256, 1024], device=device)
+                        sampledImgs = sampler(noisyImage, cond)
+                    mse_loss = mse_loss_fct(sampledImgs, images)
+                    psnr_loss = 10 * torch.log10(1 / mse_loss)
 
+
+                    total_mse += mse_loss.item()
+                    total_psnr += psnr_loss.item()
+
+
+
+                    arr = sampledImgs.cpu().numpy()
+                    with open( os.path.join(
+                        modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'),'wb') as f:
+                        pickle.dump(arr, f)
+                    save_image(sampledImgs, os.path.join(
+                        modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),
+                               nrow=modelConfig["nrow"])
+                    if rank == 0:
+                        run.log({'sampled image': wandb.Image(os.path.join(
+                        modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'))})
+                print(f"mse loss gpu {rank} epoch {e}: ", total_mse / n_image)
+                print(f"psnr loss gpu {rank} epoch {e}:", total_psnr / n_image)
+                if rank == 0:
+                    run.log({"epoch_eval": e, "loss_eval": total_mse / i,"psnr_eval": total_psnr / i})
     if rank == 0:
         run.finish()
     destroy_process_group()
