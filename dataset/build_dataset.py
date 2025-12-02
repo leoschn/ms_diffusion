@@ -83,15 +83,16 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
 
     return conditioning_list
 
-def build_training_pairs():
-    for sample in ['ESCCOL100','CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA']:
+def build_training_pairs(l,out_dir):
+    for sample in l:
         img_data = pickle.load(open(f'data/image/{sample}.pkl', 'rb'))['image']
         cond_data = pickle.load(open(f'data/conditioning_v2/{sample}/conditioning_list.pkl', 'rb'))
         assert len(img_data) == len(cond_data)+1
+        os.makedirs(out_dir,exist_ok=True)
         for window in range(1,len(cond_data)+1):
             img = img_data[window]
             cond = cond_data[window-1]
-            with open(f'data/processed_pairs_v2/{sample}_ms2_{window}.pkl', 'wb') as f:
+            with open(os.join(out_dir,f'{sample}_ms2_{window}.pkl', 'wb')) as f:
                 pickle.dump((img,cond), f)
 
 def plot_random_pairs():
@@ -109,13 +110,18 @@ def plot_random_pairs():
 
 def main():
     #
-    for sample in ['ESCCOL100','CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA']:
-        print(sample)
-        specie = re.split(r'(?=\d)', sample)[0]
-        cond_list = extract_detected_features(sample_name=sample,img_path=f'data/image/{sample}.pkl',
-                                              chimerys_report_path=f'data/chimerys/{sample}/psms.tsv',
-                                              diann_lib_path=f'data/library/{specie}_universal_cont_blood.parquet',
-                                              fdr=0.05)
-    # build_training_pairs()
+    # for sample in ['ESCCOL100','CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA']:
+    #     print(sample)
+    #     specie = re.split(r'(?=\d)', sample)[0]
+    #     cond_list = extract_detected_features(sample_name=sample,img_path=f'data/image/{sample}.pkl',
+    #                                           chimerys_report_path=f'data/chimerys/{sample}/psms.tsv',
+    #                                           diann_lib_path=f'data/library/{specie}_universal_cont_blood.parquet',
+    #                                           fdr=0.05)
+
+    build_training_pairs(['ACIBAU130','CANALB32'],'data/processed_pairs_v2/train')
+    build_training_pairs(['ESCCOL100', 'CANGLA10', 'KLEPNE164_hemoc', 'PSEAER286', 'STAHOM8_AER', 'CITFRE65', 'ESCCOL121', 'KLEPNE172',
+     'STAAU36', 'STAHOM8_ANA',  'ENCFAC56', 'ESCCOL259', 'KLEPNE86', 'STAAU81', 'STCPNE10', 'ENTCLO18',
+     'KLEOXY23', 'PSEAER154', 'STAEPI11_AER', 'STCPYO20', 'ENTHOR84', 'KLEPNE164_bdg', 'PSEAER259',
+     'STAEPI11_ANA'],'data/processed_pairs_v2/test')
 if __name__ == '__main__':
     main()
