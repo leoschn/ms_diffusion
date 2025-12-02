@@ -23,7 +23,7 @@ def main(model_config = None):
         'dataset_train': 'data/processed_pairs/train',
         'dataset_test': 'data/processed_pairs/test',
         "state": "train",  # or eval
-        "epoch": 200,
+        "epoch": 201,
         "batch_size": 1,
         "T": 1000,
         "channel": 128,
