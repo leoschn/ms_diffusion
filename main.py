@@ -50,7 +50,7 @@ def main(model_config = None):
         modelConfig = model_config
 
     train_ms(modelConfig)
-    eval_ms(modelConfig)
+    # eval_ms(modelConfig)
 
 
 if __name__ == '__main__':
