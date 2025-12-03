@@ -6,7 +6,7 @@ def main(model_config = None):
         'dataset_train': 'data/processed_pairs/train',
         'dataset_test': 'data/processed_pairs/test',
         "state": "train",  # or eval
-        "epoch": 201,
+        "epoch": 2,
         "batch_size": 1,
         "n_window":0,
         "window_embd":False,
@@ -29,7 +29,7 @@ def main(model_config = None):
         "sampledNoisyImgName": "NoisyNoGuidenceImgs",
         "sampledImgName": "sampled_ms_image",
         "nrow": 8,
-        "inter_eval":20
+        "inter_eval":1
     }
     if model_config is not None:
         modelConfig = model_config
