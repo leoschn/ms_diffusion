@@ -24,13 +24,14 @@ class ms_dataset(DatasetFolder):
     def __getitem__(self, index: int):
 
         path = self.instances[index]
+        window = int(path.split('_')[-1].split('.')[0])
         sample = self.loader(path)
         image = sample[0]
         cond = sample[1]
         if self.transform is not None:
             image = self.transform(image)
             cond = self.transform(cond)
-        return image, cond, path
+        return image, cond, path, window
 
     def __len__(self):
         return len(self.instances)
@@ -43,5 +44,3 @@ class ms_dataset(DatasetFolder):
                 instances.append(file_name)
 
         return instances
-
-

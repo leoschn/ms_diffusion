@@ -115,15 +115,16 @@ def train_ms(modelConfig: Dict):
             pbar = tqdm(dataloader_train, dynamic_ncols=True)
         else :
             pbar = dataloader_train
-        for images, cond, _ in pbar:
+        for images, cond, _, wind in pbar:
 
             # train
             optimizer.zero_grad()
             with autocast(device_type='cuda', dtype=torch.float16):
                 cond = cond.float().to(device)
                 x_0 = images.float().to(device)
+                wind = wind.int().to(device)
 
-                loss = trainer(x_0, cond).sum() / 1000.
+                loss = trainer(x_0, cond, wind).sum()
                 total_loss += loss.item()
             scaler.scale(loss).backward()
             scaler.unscale_(optimizer)
@@ -159,8 +160,8 @@ def train_ms(modelConfig: Dict):
                     pbar_test = dataloader_test
                 total_mse = 0
                 total_psnr = 0
-                for images, cond ,path in pbar_test:
-
+                for images, cond ,path ,wind in pbar_test:
+                    n_image+=1
                     f_name = os.path.basename(path[0]).replace('.pkl', '')
 
 
@@ -168,9 +169,10 @@ def train_ms(modelConfig: Dict):
                     with autocast(device_type='cuda', dtype=torch.float16):
                         cond = cond.float().to(device)
                         images = images.float().to(device)
+                        wind = wind.int().to(device)
                         noisyImage = torch.randn(
                             size=[modelConfig["batch_size"], 1,  256, 1024], device=device)
-                        sampledImgs = sampler(noisyImage, cond)
+                        sampledImgs = sampler(noisyImage, cond, wind)
                     mse_loss = mse_loss_fct(sampledImgs, images)
                     psnr_loss = 10 * torch.log10(1 / mse_loss)
 
@@ -257,7 +259,7 @@ def eval_ms(modelConfig: Dict):
         if rank == 0:
             with tqdm(dataloader_test, dynamic_ncols=True) as tqdmDataLoader:
                 n_image=0
-                for images, cond, path in tqdmDataLoader:
+                for images, cond, path, wind in tqdmDataLoader:
                     n_image += len(path)
                     total_mse=0
                     total_psnr=0
@@ -266,7 +268,7 @@ def eval_ms(modelConfig: Dict):
                     with autocast(device_type='cuda', dtype=torch.float16):
                         noisyImage = torch.randn(
                             size=[modelConfig["batch_size"], 1, 256, 1024], device=device)
-                        sampledImgs = sampler(noisyImage, cond)
+                        sampledImgs = sampler(noisyImage, cond, wind)
                     mse_loss = mse_loss_fct(sampledImgs, images)
                     psnr_loss = 10 * torch.log10(1 / mse_loss)
 
@@ -280,14 +282,14 @@ def eval_ms(modelConfig: Dict):
                         modelConfig["sampled_dir"],  f_name +'.png'), nrow=modelConfig["nrow"])
         else :
             n_image = 0
-            for images, cond, path in dataloader_test:
+            for images, cond, path, wind in dataloader_test:
                 n_image += len(path)
                 total_mse = 0
                 total_psnr = 0
                 with autocast(device_type='cuda', dtype=torch.float16):
                     noisyImage = torch.randn(
                         size=[modelConfig["batch_size"], 1, 256, 1024], device=device)
-                    sampledImgs = sampler(noisyImage, cond)
+                    sampledImgs = sampler(noisyImage, cond, wind)
 
                 mse_loss = mse_loss_fct(sampledImgs, images)
                 psnr_loss = 10 * torch.log10(1 / mse_loss)
