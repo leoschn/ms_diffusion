@@ -67,7 +67,7 @@ class DownSample(nn.Module):
         init.xavier_uniform_(self.main.weight)
         init.zeros_(self.main.bias)
 
-    def forward(self, x, temb):
+    def forward(self, x, temb, wemb):
         x = self.main(x)
         return x
 
@@ -82,7 +82,7 @@ class UpSample(nn.Module):
         init.xavier_uniform_(self.main.weight)
         init.zeros_(self.main.bias)
 
-    def forward(self, x, temb):
+    def forward(self, x, temb, wemb):
         _, _, H, W = x.shape
         x = F.interpolate(
             x, scale_factor=2, mode='nearest')
