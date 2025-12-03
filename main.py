@@ -8,6 +8,8 @@ def main(model_config = None):
         "state": "train",  # or eval
         "epoch": 201,
         "batch_size": 1,
+        "n_window":0,
+        "window_embd":False,
         "T": 1000,
         "channel": 128,
         "channel_mult": [1, 2, 3, 4],

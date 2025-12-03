@@ -62,7 +62,8 @@ def train_ms(modelConfig: Dict):
     #model
     net_model = UNet(T=modelConfig["T"], ch=modelConfig["channel"], ch_mult=modelConfig["channel_mult"],
                      attn=modelConfig["attn"],
-                     num_res_blocks=modelConfig["num_res_blocks"], dropout=modelConfig["dropout"]).to(device)
+                     num_res_blocks=modelConfig["num_res_blocks"], dropout=modelConfig["dropout"],
+                     window_embedding=modelConfig["window_embd"], n_window=modelConfig["n_window"]).to(device)
     net_model.apply(lambda m: setattr(m, 'weight', m.weight.contiguous())
     if hasattr(m, 'weight') else None)
     net_model = torch.nn.parallel.DistributedDataParallel(net_model,device_ids=[local_rank],
