@@ -1,15 +1,16 @@
 from Diffusion import train_ms, eval_ms
+from config import load_args
 
 def main(model_config = None):
-
+    args = load_args()
     modelConfig = {
         'dataset_train': 'data/processed_pairs/train',
         'dataset_test': 'data/processed_pairs/test',
         "state": "train",  # or eval
         "epoch": 201, #including 10 warming epoch (error if total < warming)
         "batch_size": 1,
-        "n_window":0,
-        "window_embd":False,
+        "n_window":args.n_window,
+        "window_embd":args.window_embd,
         "T": 1000,
         "channel": 128,
         "channel_mult": [1, 2, 3, 4],
