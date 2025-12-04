@@ -4,8 +4,8 @@ from config import load_args
 def main(model_config = None):
     args = load_args()
     modelConfig = {
-        'dataset_train': 'data/processed_pairs/train',
-        'dataset_test': 'data/processed_pairs/test',
+        'dataset_train': 'data/processed_pairs_v2/train',
+        'dataset_test': 'data/processed_pairs_v2/test',
         "state": "train",  # or eval
         "epoch": 201, #including 10 warming epoch (error if total < warming)
         "batch_size": 1,
