@@ -30,7 +30,7 @@ def main(model_config = None):
         "sampledNoisyImgName": "NoisyNoGuidenceImgs",
         "sampledImgName": "sampled_ms_image",
         "nrow": 8,
-        "inter_eval":20
+        "inter_eval":args.eval_inter
     }
     if model_config is not None:
         modelConfig = model_config
