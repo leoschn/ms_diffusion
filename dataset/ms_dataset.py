@@ -17,8 +17,11 @@ class ms_dataset(DatasetFolder):
         self.root = root
         self.instances = self.make_dataset('.pkl')
         self.loader = pkl_loader
-        self.transform = transforms.Compose([transforms.ToTensor(),
-                                             transforms.Normalize((0.5), (0.5)),
+        self.transform_img = transforms.Compose([transforms.ToTensor(),
+                                             transforms.Normalize((1.44), (1.19)),
+                                             transforms.Resize((256,1024))])
+        self.transform_cond = transforms.Compose([transforms.ToTensor(),
+                                             transforms.Normalize((0.0008), (0.013)),
                                              transforms.Resize((256,1024))])
 
     def __getitem__(self, index: int):
@@ -29,8 +32,8 @@ class ms_dataset(DatasetFolder):
         image = sample[0]
         cond = sample[1]
         if self.transform is not None:
-            image = self.transform(image)
-            cond = self.transform(cond)
+            image = self.transform_img(image)
+            cond = self.transform_cond(cond)
         return image, cond, path, window
 
     def __len__(self):

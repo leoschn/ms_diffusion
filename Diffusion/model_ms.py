@@ -137,7 +137,7 @@ class ZeroLinear(nn.Module):
         return torch.zeros(batch, self.out_features, device=x.device, dtype=x.dtype)
 
 class ResBlock(nn.Module):
-    def __init__(self, in_ch, out_ch, tdim, dropout, attn=False, window=False):
+    def __init__(self, in_ch, out_ch, tdim, dropout, attn=False, window='None'):
         super().__init__()
         self.window = window
         self.block1 = nn.Sequential(
@@ -167,12 +167,12 @@ class ResBlock(nn.Module):
         else:
             self.attn = nn.Identity()
 
-        if self.window:
+        if self.window == 'categorical' or self.window =='spacial':
             self.wind_proj = nn.Sequential(
                 Swish(),
                 nn.Linear(tdim, out_ch),
             )
-        else :
+        else:
             self.wind_proj = ZeroLinear(out_ch)
 
         self.initialize()
@@ -202,8 +202,10 @@ class UNet(nn.Module):
         tdim = ch * 4
         self.time_embedding = TimeEmbedding(T, ch, tdim)
         self.has_window_embedding = window_embedding
-        if self.has_window_embedding:
+        if self.has_window_embedding == 'categorical':
             self.window_embedding = WindowEmbedding(n_window, ch, tdim)
+        elif self.has_window_embedding == 'spacial':
+            self.window_embedding = TimeEmbedding(n_window,ch , tdim)
         else :
             self.window_embedding = ZeroLinear(ch)
 
