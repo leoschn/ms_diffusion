@@ -7,7 +7,7 @@ def main(model_config = None):
         'dataset_train': 'data/processed_pairs_v2/train',
         'dataset_test': 'data/processed_pairs_v2/test',
         "state": "train",  # or eval
-        "epoch": 201, #including 10 warming epoch (error if total < warming)
+        "epoch": args.epoches, #including 10 warming epoch (error if total < warming)
         "batch_size": 1,
         "n_window":args.n_window,
         "window_embd":args.window_embd,
