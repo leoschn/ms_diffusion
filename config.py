@@ -10,7 +10,7 @@ def load_args():
     parser.add_argument('--n_window', type=int, default=164)
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=8)
-    parser.add_argument('--window_embd', type=int, default='categorical')
+    parser.add_argument('--window_embd', type=str, default='categorical')
     args = parser.parse_args()
 
     return args
