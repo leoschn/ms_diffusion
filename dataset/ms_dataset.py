@@ -31,8 +31,9 @@ class ms_dataset(DatasetFolder):
         sample = self.loader(path)
         image = sample[0]
         cond = sample[1]
-        if self.transform is not None:
+        if self.transform_img is not None:
             image = self.transform_img(image)
+        if self.transform_cond is not None:
             cond = self.transform_cond(cond)
         return image, cond, path, window
 
