@@ -11,6 +11,7 @@ def load_args():
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--window_embd', type=str, default='categorical')
+    parser.add_argument('--save_dir', type=str, default='./SampledImgs_2/')
     args = parser.parse_args()
 
     return args

@@ -182,7 +182,7 @@ def train_ms(modelConfig: Dict):
                     total_psnr += psnr_loss.item()
 
 
-
+                    os.makedirs(modelConfig["save_weight_dir"], exist_ok=True)
                     arr = sampledImgs.cpu().numpy()
                     with open( os.path.join(
                         modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'),'wb') as f:
