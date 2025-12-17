@@ -21,7 +21,6 @@ class ms_dataset(DatasetFolder):
                                              transforms.Normalize((1.44), (1.19)),
                                              transforms.Resize((256,1024))])
         self.transform_cond = transforms.Compose([transforms.ToTensor(),
-                                             transforms.Normalize((0.0008), (0.013)),
                                              transforms.Resize((256,1024))])
 
     def __getitem__(self, index: int):

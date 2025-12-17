@@ -43,7 +43,7 @@ def train_ms(modelConfig: Dict):
 
     init_process_group(backend='nccl')
     torch.cuda.set_device(local_rank)
-    scaler = GradScaler()
+    # scaler = GradScaler()
     device = torch.device(f"cuda:{local_rank}")
     #train data
     dataset_train = ms_dataset(root=modelConfig["dataset_train"])
@@ -120,19 +120,21 @@ def train_ms(modelConfig: Dict):
 
             # train
             optimizer.zero_grad()
-            with autocast(device_type='cuda', dtype=torch.float16):
+            with autocast(device_type='cuda', dtype=torch.float16, enabled=False):
                 cond = cond.float().to(device)
                 x_0 = images.float().to(device)
                 wind = wind.int().to(device)
 
                 loss = trainer(x_0, cond, wind).sum()
                 total_loss += loss.item()
-            scaler.scale(loss).backward()
-            scaler.unscale_(optimizer)
-            torch.nn.utils.clip_grad_norm_(
-                net_model.parameters(), modelConfig["grad_clip"])
-            scaler.step(optimizer)
-            scaler.update()
+            loss.backward()
+            optimizer.step()
+            # scaler.scale(loss).backward()
+            # scaler.unscale_(optimizer)
+            # torch.nn.utils.clip_grad_norm_(
+            #     net_model.parameters(), modelConfig["grad_clip"])
+            # scaler.step(optimizer)
+            # scaler.update()
             if rank == 0:
                 i += 1
                 lr = warmUpScheduler.get_lr()[0]
@@ -167,7 +169,7 @@ def train_ms(modelConfig: Dict):
 
 
 
-                    with autocast(device_type='cuda', dtype=torch.float16):
+                    with autocast(device_type='cuda', dtype=torch.float16,enabled=False):
                         cond = cond.float().to(device)
                         images = images.float().to(device)
                         wind = wind.int().to(device)
@@ -229,7 +231,6 @@ def eval_ms(modelConfig: Dict):
     # load Diffusion and evaluate
     with torch.no_grad():
 
-        scaler = GradScaler()
         device = torch.device(f"cuda:{local_rank}")
         dataset_test = ms_dataset(root=modelConfig["dataset_test"])
         sampler_test = DistributedSampler(dataset_test, shuffle=True)
@@ -266,14 +267,12 @@ def eval_ms(modelConfig: Dict):
                     total_psnr=0
 
 
-                    with autocast(device_type='cuda', dtype=torch.float16):
+                    with autocast(device_type='cuda', dtype=torch.float16,enabled=False):
                         noisyImage = torch.randn(
                             size=[modelConfig["batch_size"], 1, 256, 1024], device=device)
                         sampledImgs = sampler(noisyImage, cond, wind)
                     mse_loss = mse_loss_fct(sampledImgs, images)
                     psnr_loss = 10 * torch.log10(1 / mse_loss)
-
-
 
                     total_mse += mse_loss.item()
                     total_psnr += psnr_loss.item()
