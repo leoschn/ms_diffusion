@@ -1,17 +1,18 @@
 import glob
 import os
 
-from sympy.stats import sample
+import sys
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from pyRawMSDataReader.pyRawMSDataReader.RawFileReader import RawFileReader
 from pyRawMSDataReader.pyRawMSDataReader.WiffFileReader_py import WiffFileReader
 import numpy as np
 import pickle
-import sys
-from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT_ROOT))
+
+
 
 def build_image_ms2_raw(path_raw,out_path,bin_mz=1):
     # load raw data
