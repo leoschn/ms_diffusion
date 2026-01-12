@@ -242,7 +242,7 @@ def build_image_ms2_wiff_2(path_wiff, out_path, bin_mz=1):
     return data_out
 
 if __name__ == '__main__':
-    sample_list = glob.glob('/lustre/fsstor/projects/rech/bun/ucg81ws/data_zeno_ms**.wiff', recursive=True)
+    sample_list = glob.glob('/lustre/fsstor/projects/rech/bun/ucg81ws/data_zeno_ms/**.wiff', recursive=True)
     for sample in sample_list:
         f_name = os.path.basename(sample).split('.wiff')[0]
         print(f_name)
