@@ -1,4 +1,10 @@
+import glob
+import os
+
+from sympy.stats import sample
+
 from pyRawMSDataReader.pyRawMSDataReader.RawFileReader import RawFileReader
+from pyRawMSDataReader.pyRawMSDataReader.WiffFileReader_py import WiffFileReader
 import numpy as np
 import pickle
 
@@ -60,8 +66,184 @@ def build_image_ms2_raw(path_raw,out_path,bin_mz=1):
             pickle.dump(data_out, f)
     return data_out
 
+
+def build_image_ms2_wiff(path_wiff,out_path,bin_mz=1):
+    # load raw data
+    wiffFile = WiffFileReader(path_wiff)
+    max_cycle = 0
+
+    start_rt = wiffFile.GetStartTime()
+    end_rt = wiffFile.GetEndTime()
+    span_rt = end_rt - start_rt
+
+    first_scan, last_scan = wiffFile.GetFirstSpectrumNumber(), wiffFile.GetLastSpectrumNumber()
+    list_precursor_mass_center=[]
+    for scanNumber in range(first_scan, last_scan):
+        if wiffFile.GetMSOrderForScanNum(scanNumber) == 1:
+            ms1_start_mz = wiffFile.source.ScanInfos[scanNumber].LowMz
+            ms1_end_mz = wiffFile.source.ScanInfos[scanNumber].HighMz
+            print('ms1 ',wiffFile.source.ScanInfos[scanNumber].LowMz)
+            print('ms1 ',wiffFile.source.ScanInfos[scanNumber].HighMz)
+            max_cycle += 1
+        elif wiffFile.GetPrecursorMassForScanNum(scanNumber) not in list_precursor_mass_center:
+            list_precursor_mass_center.append(wiffFile.GetPrecursorMassForScanNum(scanNumber))
+    list_precursor_mass_center.sort()
+
+    start_mz = ms1_start_mz
+    end_mz  = ms1_end_mz
+    print('start', ms1_start_mz, 'end', ms1_end_mz)
+    total_mz = end_mz - start_mz
+
+    n_bin = int(total_mz // bin_mz)
+    size_bin = total_mz / n_bin
+    list_img = [np.zeros([max_cycle, n_bin+1]) for i in range(len(list_precursor_mass_center)+1)]
+    cycle = 0
+    dict_int={}
+    ind=1
+
+    for mass in list_precursor_mass_center:
+        dict_int[mass] = ind
+        ind+=1
+
+    for scanNumber in range(first_scan, last_scan):
+        masses, intensities = wiffFile.GetProfileMassListFromScanNum(scanNumber)
+        line = np.zeros(n_bin+1)
+        if len(masses) > 0:
+            for k in range(len(masses)):
+                if masses[k] < end_mz and masses[k] > start_mz:
+                    line[int((masses[k] - ms1_start_mz) // size_bin)] += intensities[k]
+        if wiffFile.GetMSOrderForScanNum(scanNumber) == 1:
+            list_img[0][cycle, :] = np.maximum(np.log10(line), np.zeros(n_bin+1))
+        else :
+            ind = dict_int[wiffFile.GetPrecursorMassForScanNum(scanNumber)]
+            list_img[ind][cycle, :] = np.maximum(np.log10(line), np.zeros(n_bin+1))
+            if wiffFile.GetPrecursorMassForScanNum(scanNumber) == list_precursor_mass_center[-1]:
+                cycle += 1
+
+    meta_data = {'n_bin_ms1': n_bin, 'size_bin_ms1': size_bin, 'ms1_start_mz' :start_mz,
+            'ms1_end_mz' : end_mz,'max_cycle' : max_cycle,'list_precursor_mass_center':list_precursor_mass_center,
+            'total_ms1_mz':total_mz,'start_rt':start_rt,'end_rt':end_rt,'span_rt':span_rt}
+
+    data_out = {'image': list_img,'metadata':meta_data}
+    if out_path is not None :
+        with open(out_path, 'wb') as f:
+            print('saving images to', out_path)
+            pickle.dump(data_out, f)
+    wiffFile.Close()
+    return data_out
+
+def build_image_ms2_wiff_2(path_wiff, out_path, bin_mz=1):
+    import numpy as np
+    import pickle
+    from collections import OrderedDict
+
+    wiffFile = WiffFileReader(path_wiff)
+
+    start_rt = wiffFile.GetStartTime()
+    end_rt = wiffFile.GetEndTime()
+    span_rt = end_rt - start_rt
+
+    first_scan = wiffFile.GetFirstSpectrumNumber()
+    last_scan = wiffFile.GetLastSpectrumNumber()
+
+    # ----------------------------
+    # 1. Identify MS1 range and DIA windows
+    # ----------------------------
+    dia_window_set = set()
+    max_cycle = 0
+    ms1_start_mz = None
+    ms1_end_mz = None
+
+    for scanNumber in range(first_scan, last_scan):
+        scan = wiffFile.source.ScanInfos[scanNumber]
+
+        if wiffFile.GetMSOrderForScanNum(scanNumber) == 1:
+            ms1_start_mz = scan.LowMz
+            ms1_end_mz = scan.HighMz
+            max_cycle += 1
+        else:
+            dia_window_set.add((scan.LowMz, scan.HighMz)) # MS1 is index 0
+    dia_windows = sorted(dia_window_set, key=lambda x: (x[0], x[1]))
+    window_to_index = {
+        win: i + 1  # MS1 = 0
+        for i, win in enumerate(dia_windows)
+    }
+    start_mz = ms1_start_mz
+    end_mz = ms1_end_mz
+    total_mz = end_mz - start_mz
+
+    n_bin = int(total_mz // bin_mz)
+    size_bin = total_mz / n_bin
+
+    # ----------------------------
+    # 2. Allocate images
+    # ----------------------------
+    list_img = [
+        np.zeros((max_cycle, n_bin + 1), dtype=np.float32)
+        for _ in range(len(dia_windows) + 1)
+    ]
+
+    # ----------------------------
+    # 3. Fill images
+    # ----------------------------
+    cycle = -1  # will increment on MS1
+
+    for scanNumber in range(first_scan, last_scan):
+        masses, intensities = wiffFile.GetProfileMassListFromScanNum(scanNumber)
+        scan = wiffFile.source.ScanInfos[scanNumber]
+
+        # increment cycle on MS1
+        if wiffFile.GetMSOrderForScanNum(scanNumber) == 1:
+            cycle += 1
+
+        if cycle < 0 or len(masses) == 0:
+            continue
+
+        # vectorized binning (same bins for MS1 and MS2)
+        bins = ((masses - start_mz) / size_bin).astype(int)
+        valid = (bins >= 0) & (bins <= n_bin)
+
+        line = np.zeros(n_bin + 1, dtype=np.float32)
+        np.add.at(line, bins[valid], intensities[valid])
+
+        # safe log transform
+        line = np.log10(line + 1)
+
+        if wiffFile.GetMSOrderForScanNum(scanNumber) == 1:
+            list_img[0][cycle, :] = line
+        else:
+            key = (scan.LowMz, scan.HighMz)
+            ind = window_to_index[key]
+            list_img[ind][cycle, :] = line
+
+    # ----------------------------
+    # 4. Metadata
+    # ----------------------------
+    meta_data = {
+        'n_bin': n_bin,
+        'size_bin': size_bin,
+        'start_mz': start_mz,
+        'end_mz': end_mz,
+        'max_cycle': max_cycle,
+        'dia_windows': window_to_index,
+        'start_rt': start_rt,
+        'end_rt': end_rt,
+        'span_rt': span_rt
+    }
+
+    data_out = {'image': list_img, 'metadata': meta_data}
+
+    if out_path is not None:
+        with open(out_path, 'wb') as f:
+            print('saving images to', out_path)
+            pickle.dump(data_out, f)
+
+    wiffFile.Close()
+    return data_out
+
 if __name__ == '__main__':
-    #'CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA'
-    for sample in ['ESCCOL100']:
-        print(sample)
-        data_out = build_image_ms2_raw(f'data/raw/20250624_{sample}_VN_Microflow_100pct_ACN_15min_4Th_DIA_5ul_inj_1.raw',f'data/image/{sample}.pkl')
+    sample_list = glob.glob('/lustre/fsstor/projects/rech/bun/ucg81ws/data_zeno_ms**.wiff', recursive=True)
+    for sample in sample_list:
+        f_name = os.path.basename(sample).split('.wiff')[0]
+        print(f_name)
+        data_out = build_image_ms2_wiff_2(f'/lustre/fsstor/projects/rech/bun/ucg81ws/data_zeno_ms/{f_name}.wiff',f'/lustre/fsstor/projects/rech/bun/ucg81ws/image_zeno_ms2/{f_name}.pkl')

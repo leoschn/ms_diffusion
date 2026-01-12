@@ -1,6 +1,5 @@
 import os
 import pickle
-import re
 from random import choice
 
 from loess.loess_1d import loess_1d
@@ -74,6 +73,48 @@ def extract_detected_features(sample_name,img_path,chimerys_report_path,diann_li
             X = row[1]['X']
             if X < conditioning.shape[0] and Y < conditioning.shape[1]:
                 conditioning[X, Y] += row[1]['Relative.Intensity']
+        conditioning_list.append(conditioning)
+        print(conditioning.sum())
+
+    os.makedirs(f'data/conditioning_v2/{sample_name}',exist_ok=True)
+    with open(f'data/conditioning_v2/{sample_name}/conditioning_list.pkl', 'wb') as f:
+        pickle.dump(conditioning_list, f)
+
+    return conditioning_list
+
+
+def extract_detected_features_zeno(sample_name,img_path,diann_report,fdr=0.05):
+    img_data = pickle.load(open(img_path, 'rb'))
+    img_list = img_data['image']
+    metadata = img_data['metadata']
+    df_diann = pd.read_csv(diann_report, sep='\t')
+    df_diann = df_diann[df_diann['PEP'] <= fdr]
+    df_diann['X'] = ((df_diann['RT'] - metadata['start_rt']) / metadata['span_rt']) * metadata[
+        'max_cycle'] #RT coordinate in the image
+    df_diann['X'] = df_diann['X'].round(0).astype('int64')
+    df_diann['scan_window'] = df_diann['MS2.Scan']%len(metadata['list_precursor_mass_center']) #Vérifier qu'il n'y ait pas de décallage
+    nb_window = len(img_list)
+    conditioning_list=[]
+    for window in range(1, nb_window):
+        image_window = img_list[window]
+        conditioning = np.zeros_like(image_window)
+        df_window = df_diann[df_diann['scan_window'] == window]
+        df_window_valid = df_window[(df_window['X']< conditioning.shape[0])]
+
+
+        for row in df_window_valid.iterrows():
+            X = row[1]['X']
+            frag_info = row[1]['Fragment.Info'] #mz and name of frags
+            frag_int = row[1]['Fragment.Quant.Raw']
+            list_mz = frag_info.split(';')
+            list_mz = [i.split['/'[1]] for i in list_mz] #mz of frags
+            list_mz = [(((i - metadata['ms1_start_mz']) / metadata['total_ms1_mz']) * metadata['n_bin_ms1']).round(0).astype('int64')for i in list_mz] #mz coordinate on the image (Y)
+            list_int = frag_int.split(';')
+
+            for i in range(len(list_mz)):
+                if list_mz[i] < conditioning.shape[1]:
+                    conditioning[X, list_mz[i]] += list_int[i]
+
         conditioning_list.append(conditioning)
         print(conditioning.sum())
 
