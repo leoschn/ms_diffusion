@@ -1,3 +1,4 @@
+import importlib
 import os
 import sys
 import numpy as np
@@ -6,12 +7,14 @@ from pythonnet import load
 # require pythonnet, pip install pythonnet
 load("mono")
 import clr
-base_path = '/home/leo/PycharmProjects/synthetic_mzml_generation/'
+mod = importlib.import_module("pyRawMSDataReader")
+module_dir = os.path.dirname(os.path.abspath(mod.__file__))
+
 
 from System import String
 # sys.path.append("DLLs")
-clr.AddReference(os.path.join(base_path,'pyRawMSDataReader/DLLs/ThermoFisher.CommonCore.Data'))
-clr.AddReference(os.path.join(base_path,'pyRawMSDataReader/DLLs/ThermoFisher.CommonCore.RawFileReader'))
+clr.AddReference(os.path.join(module_dir,'DLLs/ThermoFisher.CommonCore.Data'))
+clr.AddReference(os.path.join(module_dir,'DLLs/ThermoFisher.CommonCore.RawFileReader'))
 import ThermoFisher
 from ThermoFisher.CommonCore.Data.Interfaces import IScanEventBase, IScanEvent
 '''
