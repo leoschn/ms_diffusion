@@ -255,4 +255,3 @@ if __name__ == '__main__':
         f_name = os.path.basename(sample).split('.wiff')[0]
         print(f_name)
         data_out = build_image_ms2_wiff_2(f'//lustre/fswork/projects/rech/bun/ucg81ws/these/ms_diffusion/data/wiff_zeno/{f_name}.wiff',f'//lustre/fswork/projects/rech/bun/ucg81ws/these/ms_diffusion/data/image_zeno/{f_name}.pkl')
-        break
