@@ -248,8 +248,11 @@ def build_image_ms2_wiff_2(path_wiff, out_path, bin_mz=1):
     return data_out
 
 if __name__ == '__main__':
-    sample_list = glob.glob('/lustre/fsstor/projects/rech/bun/ucg81ws/data_zeno_ms/**.wiff', recursive=True)
+    print('building image')
+    sample_list = glob.glob('/lustre/fswork/projects/rech/bun/ucg81ws/these/ms_diffusion/data/wiff_zeno/**.wiff', recursive=True)
+    print(sample_list)
     for sample in sample_list:
         f_name = os.path.basename(sample).split('.wiff')[0]
         print(f_name)
-        data_out = build_image_ms2_wiff_2(f'/lustre/fsstor/projects/rech/bun/ucg81ws/data_zeno_ms/{f_name}.wiff',f'/lustre/fsstor/projects/rech/bun/ucg81ws/image_zeno_ms2/{f_name}.pkl')
+        data_out = build_image_ms2_wiff_2(f'//lustre/fswork/projects/rech/bun/ucg81ws/these/ms_diffusion/data/wiff_zeno/{f_name}.wiff',f'//lustre/fswork/projects/rech/bun/ucg81ws/these/ms_diffusion/data/image_zeno/{f_name}.pkl')
+        break
