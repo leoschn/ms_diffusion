@@ -373,17 +373,24 @@ def build_image_ms2_mzml(path_mzml, out_path=None, bin_mz=1.0):
 
 
 if __name__ == '__main__':
-    print('building image')
-    sample_list = glob.glob('/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/**.mzML', recursive=True)
-    random.shuffle(sample_list)
-    sample_with_error=[]
-    for sample in sample_list:
-        f_name = os.path.basename(sample).split('.mzML')[0]
-        print(f_name)
-        if not(os.path.exists(f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{f_name}.pkl')):
+    with open(sys.argv[1], 'r') as f:
+        f_name = f.readline()
+        if not (os.path.exists(f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{f_name}.pkl')):
             try :
                 data_out = build_image_ms2_mzml(f'/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/{f_name}.mzML',f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{f_name}.pkl')
             except:
-                sample_with_error.append(sample)
-    print('sample with error', sample_with_error)
+                print(f_name)
+    # print('building image')
+    # sample_list = glob.glob('/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/**.mzML', recursive=True)
+    # random.shuffle(sample_list)
+    # sample_with_error=[]
+    # for sample in sample_list:
+    #     f_name = os.path.basename(sample).split('.mzML')[0]
+    #     print(f_name)
+    #     if not(os.path.exists(f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{f_name}.pkl')):
+    #         try :
+    #             data_out = build_image_ms2_mzml(f'/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/{f_name}.mzML',f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{f_name}.pkl')
+    #         except:
+    #             sample_with_error.append(sample)
+    # print('sample with error', sample_with_error)
 
