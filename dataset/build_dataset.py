@@ -365,7 +365,7 @@ def main():
             sample_name = os.path.basename(f_name).split('.mzML')[0]
             extract_detected_features_zeno_gaussian(out_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl',
                                                     img_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{sample_name}.pkl',
-                                                    diann_report=f'/lustre/fsn1/projects/rech/bun/ucg81ws/report/report_{sample_name}.tsv')
+                                                    diann_report=f'/lustre/fsn1/projects/rech/bun/ucg81ws/output/report_{sample_name}.tsv')
             build_training_pairs(img_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{sample_name}.pkl',
                                  cond_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl',
                                  out_dir='/lustre/fsn1/projects/rech/bun/ucg81ws/pairs/',

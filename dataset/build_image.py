@@ -3,6 +3,8 @@ import os
 
 import sys
 from pathlib import Path
+import random
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -373,7 +375,7 @@ def build_image_ms2_mzml(path_mzml, out_path=None, bin_mz=1.0):
 if __name__ == '__main__':
     print('building image')
     sample_list = glob.glob('/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/**.mzML', recursive=True)
-    print(sample_list)
+    random.shuffle(sample_list)
     sample_with_error=[]
     for sample in sample_list:
         f_name = os.path.basename(sample).split('.mzML')[0]
