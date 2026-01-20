@@ -13,15 +13,15 @@ def pkl_loader(path):
     return sample
 
 class ms_dataset(DatasetFolder):
-    def __init__(self, root):
+    def __init__(self, root, im_size=(512,1024)):
         self.root = root
         self.instances = self.make_dataset('.pkl')
         self.loader = pkl_loader
         self.transform_img = transforms.Compose([transforms.ToTensor(),
                                              transforms.Normalize((1.44), (1.19)),
-                                             transforms.Resize((256,1024))])
+                                             transforms.Resize(im_size)])
         self.transform_cond = transforms.Compose([transforms.ToTensor(),
-                                             transforms.Resize((256,1024))])
+                                             transforms.Resize(im_size)])
 
     def __getitem__(self, index: int):
 
@@ -39,7 +39,7 @@ class ms_dataset(DatasetFolder):
     def __len__(self):
         return len(self.instances)
 
-    def make_dataset(self,valid_ext):
+    def make_dataset(self, valid_ext):
         instances=[]
         file_names = glob.glob(os.path.join(self.root, '*'))
         for file_name in file_names:

@@ -1,3 +1,4 @@
+import glob
 import os
 import pickle
 from random import choice
@@ -227,7 +228,7 @@ def extract_detected_features_zeno_2(sample_name, img_path, diann_report, fdr=0.
 
     return conditioning_list
 
-def extract_detected_features_zeno_gaussian(sample_name, img_path, diann_report, fdr=0.05):
+def extract_detected_features_zeno_gaussian(out_path, img_path, diann_report, fdr=0.05):
     import numpy as np
     import pandas as pd
     import pickle
@@ -338,56 +339,38 @@ def extract_detected_features_zeno_gaussian(sample_name, img_path, diann_report,
     # ----------------------------
     # 6. Save
     # ----------------------------
-    out_dir = f'../data/test/{sample_name}'
-    os.makedirs(out_dir, exist_ok=True)
 
-    with open(f'{out_dir}/conditioning_list.pkl', 'wb') as f:
+    with open(out_path, 'wb') as f:
         pickle.dump(conditioning_list, f)
 
     return conditioning_list
 
 
-def build_training_pairs(l,out_dir):
-    for sample in l:
-        img_data = pickle.load(open(f'data/image/{sample}.pkl', 'rb'))['image']
-        cond_data = pickle.load(open(f'data/conditioning_v2/{sample}/conditioning_list.pkl', 'rb'))
-        assert len(img_data) == len(cond_data)+1
-        os.makedirs(out_dir,exist_ok=True)
-        for window in range(1,len(cond_data)+1):
-            img = img_data[window]
-            cond = cond_data[window-1]
-            with open(os.path.join(out_dir,f'{sample}_ms2_{window}.pkl'), 'wb') as f:
-                pickle.dump((img,cond), f)
-
-def plot_random_pairs():
-    mypath = '../data/processed_pairs'
-    onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-    f_name = choice(onlyfiles)
-    with open(f'../data/processed_pairs/{f_name}', 'rb') as f:
-        img,cond = pickle.load(f)
-    fig, axs = plt.subplots(2)
-    axs[0].imshow(img)
-    axs[1].imshow(cond)
-    plt.savefig(f'..img_{f_name}.png')
-
+def build_training_pairs(img_path,cond_path,out_dir,sample_name):
+    img_data = pickle.load(open(img_path, 'rb'))['image']
+    cond_data = pickle.load(open(cond_path, 'rb'))
+    assert len(img_data) == len(cond_data)+1
+    os.makedirs(out_dir,exist_ok=True)
+    for window in range(1,len(cond_data)):
+        img = img_data[window]
+        cond = cond_data[window]
+        with open(os.path.join(out_dir,f'{sample_name}_ms2_{window}.pkl'), 'wb') as f:
+            pickle.dump((img,cond), f)
 
 
 def main():
-    #
-    # for sample in ['ESCCOL100','CANGLA10','KLEPNE164_hemoc','PSEAER286','STAHOM8_AER','CITFRE65','ESCCOL121','KLEPNE172','STAAU36','STAHOM8_ANA','ACIBAU130','ENCFAC56','ESCCOL259','KLEPNE86','STAAU81','STCPNE10','ENTCLO18','KLEOXY23','PSEAER154','STAEPI11_AER','STCPYO20','CANALB32','ENTHOR84','KLEPNE164_bdg','PSEAER259','STAEPI11_ANA']:
-    #     print(sample)
-    #     specie = re.split(r'(?=\d)', sample)[0]
-    #     cond_list = extract_detected_features(sample_name=sample,img_path=f'data/image/{sample}.pkl',
-    #                                           chimerys_report_path=f'data/chimerys/{sample}/psms.tsv',
-    #                                           diann_lib_path=f'data/library/{specie}_universal_cont_blood.parquet',
-    #                                           fdr=0.05)
+    sample_list = glob.glob('/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/**.mzML', recursive=True)
+    for f_name in sample_list:
+        if not os.path.exists(f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl'):
+            sample_name = os.path.basename(f_name).split('.mzML')[0]
+            extract_detected_features_zeno_gaussian(out_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl',
+                                                    img_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{sample_name}.pkl',
+                                                    diann_report=f'/lustre/fsn1/projects/rech/bun/ucg81ws/report/report_{sample_name}.tsv')
+            build_training_pairs(img_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{sample_name}.pkl',
+                                 cond_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl',
+                                 out_dir='/lustre/fsn1/projects/rech/bun/ucg81ws/pairs/',
+                                 sample_name=sample_name)
 
-    # build_training_pairs(['ACIBAU130','CANALB32'],'data/processed_pairs_v2/train')
-    # build_training_pairs(['ESCCOL100', 'CANGLA10', 'KLEPNE164_hemoc', 'PSEAER286', 'STAHOM8_AER', 'CITFRE65', 'ESCCOL121', 'KLEPNE172',
-    #  'STAAU36', 'STAHOM8_ANA',  'ENCFAC56', 'ESCCOL259', 'KLEPNE86', 'STAAU81', 'STCPNE10', 'ENTCLO18',
-    #  'KLEOXY23', 'PSEAER154', 'STAEPI11_AER', 'STCPYO20', 'ENTHOR84', 'KLEPNE164_bdg', 'PSEAER259',
-    #  'STAEPI11_ANA'],'data/processed_pairs_v2/test')
 
-    extract_detected_features_zeno_gaussian('KLEAER-20-AER-d200_mzml_gaussian','../data/test/KLEAER-20-AER-d200_mzml.pkl','../data/test/report_KLEAER-20-AER-d200.tsv')
 if __name__ == '__main__':
     main()

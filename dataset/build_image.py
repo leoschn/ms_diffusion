@@ -371,21 +371,17 @@ def build_image_ms2_mzml(path_mzml, out_path=None, bin_mz=1.0):
 
 
 if __name__ == '__main__':
-    # print('building image')
-    # sample_list = glob.glob('/lustre/fsn1/projects/rech/bun/ucg81ws/wiff/**.wiff', recursive=True)
-    # print(sample_list)
-    # sample_with_error=[]
-    # for sample in sample_list:
-    #     f_name = os.path.basename(sample).split('.wiff')[0]
-    #     print(f_name)
-    #     if not(os.path.exists(f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{f_name}.pkl')):
-    #         try :
-    #             data_out = build_image_ms2_wiff_2(f'/lustre/fsn1/projects/rech/bun/ucg81ws/wiff/{f_name}.wiff',f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{f_name}.pkl')
-    #         except:
-    #             sample_with_error.append(sample)
-    # print('sample with error', sample_with_error)
-    # data_out = build_image_ms2_wiff_2('../data/test/KLEAER-20-AER-d200.wiff',
-    #                                   '../data/test/KLEAER-20-AER-d200.pkl')
+    print('building image')
+    sample_list = glob.glob('/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/**.mzML', recursive=True)
+    print(sample_list)
+    sample_with_error=[]
+    for sample in sample_list:
+        f_name = os.path.basename(sample).split('.mzML')[0]
+        print(f_name)
+        if not(os.path.exists(f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{f_name}.pkl')):
+            try :
+                data_out = build_image_ms2_mzml(f'/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/{f_name}.mzML',f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{f_name}.pkl')
+            except:
+                sample_with_error.append(sample)
+    print('sample with error', sample_with_error)
 
-    data_out = build_image_ms2_mzml('../data/test/KLEAER-20-AER-d200.mzML',
-                                      '../data/test/KLEAER-20-AER-d200_mzml.pkl')

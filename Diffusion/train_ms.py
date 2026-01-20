@@ -46,13 +46,13 @@ def train_ms(modelConfig: Dict):
     # scaler = GradScaler()
     device = torch.device(f"cuda:{local_rank}")
     #train data
-    dataset_train = ms_dataset(root=modelConfig["dataset_train"])
+    dataset_train = ms_dataset(root=modelConfig["dataset_train"],im_size=modelConfig["im_size"])
     sampler_train=DistributedSampler(dataset_train,shuffle=True)
     dataloader_train = DataLoader(
         dataset_train, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=3, drop_last=True, pin_memory=True,sampler=sampler_train)
 
     #test data
-    dataset_test = ms_dataset(root=modelConfig["dataset_test"])
+    dataset_test = ms_dataset(root=modelConfig["dataset_test"],im_size=modelConfig["im_size"])
     sampler_test = DistributedSampler(dataset_test, shuffle=True)
     sampler_test.set_epoch(0)
     dataloader_test = DataLoader(
@@ -120,7 +120,7 @@ def train_ms(modelConfig: Dict):
 
             # train
             optimizer.zero_grad()
-            with autocast(device_type='cuda', dtype=torch.float16, enabled=False):
+            with autocast(device_type='cuda', dtype=torch.bfloat16, enabled=False):
                 cond = cond.float().to(device)
                 x_0 = images.float().to(device)
                 wind = wind.int().to(device)
@@ -169,7 +169,7 @@ def train_ms(modelConfig: Dict):
 
 
 
-                    with autocast(device_type='cuda', dtype=torch.float16,enabled=False):
+                    with autocast(device_type='cuda', dtype=torch.bfloat16,enabled=False):
                         cond = cond.float().to(device)
                         images = images.float().to(device)
                         wind = wind.int().to(device)
@@ -267,7 +267,7 @@ def eval_ms(modelConfig: Dict):
                     total_psnr=0
 
 
-                    with autocast(device_type='cuda', dtype=torch.float16,enabled=False):
+                    with autocast(device_type='cuda', dtype=torch.bfloat16,enabled=False):
                         noisyImage = torch.randn(
                             size=[modelConfig["batch_size"], 1, 256, 1024], device=device)
                         sampledImgs = sampler(noisyImage, cond, wind)
@@ -286,7 +286,7 @@ def eval_ms(modelConfig: Dict):
                 n_image += len(path)
                 total_mse = 0
                 total_psnr = 0
-                with autocast(device_type='cuda', dtype=torch.float16):
+                with autocast(device_type='cuda', dtype=torch.bfloat16):
                     noisyImage = torch.randn(
                         size=[modelConfig["batch_size"], 1, 256, 1024], device=device)
                     sampledImgs = sampler(noisyImage, cond, wind)

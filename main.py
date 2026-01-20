@@ -12,6 +12,7 @@ def main(model_config = None):
         "n_window":args.n_window,
         "window_embd":args.window_embd,
         "T": 1000,
+        "im_size": (512,1024),
         "channel": 128,
         "channel_mult": [1, 2, 3, 4],
         "attn": [2],
