@@ -1,6 +1,7 @@
 import glob
 import os
 import pickle
+import sys
 from random import choice
 
 from loess.loess_1d import loess_1d
@@ -359,17 +360,29 @@ def build_training_pairs(img_path,cond_path,out_dir,sample_name):
 
 
 def main():
-    sample_list = glob.glob('/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/**.mzML', recursive=True)
-    for f_name in sample_list:
-        if not os.path.exists(f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl'):
-            sample_name = os.path.basename(f_name).split('.mzML')[0]
-            extract_detected_features_zeno_gaussian(out_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl',
-                                                    img_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{sample_name}.pkl',
-                                                    diann_report=f'/lustre/fsn1/projects/rech/bun/ucg81ws/output/report_{sample_name}.tsv')
+    with open(sys.argv[1], 'r') as f:
+        sample_name = f.readline()
+        if not (os.path.exists(f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl')):
+            extract_detected_features_zeno_gaussian(
+                out_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl',
+                img_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{sample_name}.pkl',
+                diann_report=f'/lustre/fsn1/projects/rech/bun/ucg81ws/output/report_{sample_name}.tsv')
             build_training_pairs(img_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{sample_name}.pkl',
-                                 cond_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl',
-                                 out_dir='/lustre/fsn1/projects/rech/bun/ucg81ws/pairs/',
-                                 sample_name=sample_name)
+                cond_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl',
+                out_dir='/lustre/fsn1/projects/rech/bun/ucg81ws/pairs/',
+                sample_name=sample_name)
+
+    # sample_list = glob.glob('/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/**.mzML', recursive=True)
+    # for f_name in sample_list:
+    #     if not os.path.exists(f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl'):
+    #         sample_name = os.path.basename(f_name).split('.mzML')[0]
+    #         extract_detected_features_zeno_gaussian(out_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl',
+    #                                                 img_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{sample_name}.pkl',
+    #                                                 diann_report=f'/lustre/fsn1/projects/rech/bun/ucg81ws/output/report_{sample_name}.tsv')
+    #         build_training_pairs(img_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{sample_name}.pkl',
+    #                              cond_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl',
+    #                              out_dir='/lustre/fsn1/projects/rech/bun/ucg81ws/pairs/',
+    #                              sample_name=sample_name)
 
 
 if __name__ == '__main__':
