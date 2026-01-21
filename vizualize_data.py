@@ -125,7 +125,6 @@ def main_cond(pkl_path,cond_path):
     stack, feature_stack, window_info = load_ms_images_cond(pkl_path,cond_path)
 
     img_vmin, img_vmax = compute_global_contrast(stack)
-    feat_vmin, feat_vmax = compute_feature_contrast(feature_stack)
 
     viewer = napari.Viewer(title="MS DIA Image Viewer")
 

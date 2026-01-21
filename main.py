@@ -4,10 +4,11 @@ from config import load_args
 def main(model_config = None):
     args = load_args()
     modelConfig = {
-        'dataset_train': 'data/processed_pairs_v2/train',
-        'dataset_test': 'data/processed_pairs_v2/test',
+        'dataset_train': '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/train',
+        'dataset_test': '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/test',
         "state": "train",  # or eval
-        "epoch": args.epoches, #including 10 warming epoch (error if total < warming)
+        "epoch": args.epoches,
+        "warmup_epoch": args.warmup_epoches,
         "batch_size": 1,
         "n_window":args.n_window,
         "window_embd":args.window_embd,

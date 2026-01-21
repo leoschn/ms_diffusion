@@ -4,7 +4,8 @@ import argparse
 def load_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--epoches', type=int, default=3)
+    parser.add_argument('--epoches', type=int, default=10)
+    parser.add_argument('--warmup_epoches', type=int, default=1)
     parser.add_argument('--save_inter', type=int, default=50)
     parser.add_argument('--eval_inter', type=int, default=1)
     parser.add_argument('--n_window', type=int, default=164)

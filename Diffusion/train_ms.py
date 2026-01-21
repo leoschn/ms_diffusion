@@ -96,7 +96,7 @@ def train_ms(modelConfig: Dict):
     cosineScheduler = optim.lr_scheduler.CosineAnnealingLR(
         optimizer=optimizer, T_max=modelConfig["epoch"], eta_min=0, last_epoch=-1)
     warmUpScheduler = GradualWarmupScheduler(
-        optimizer=optimizer, multiplier=modelConfig["multiplier"], warm_epoch=modelConfig["epoch"] // 10,
+        optimizer=optimizer, multiplier=modelConfig["multiplier"], warm_epoch=modelConfig["warmup_epoches"],
         after_scheduler=cosineScheduler)
     trainer = GaussianDiffusionTrainer_ms(
         net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
