@@ -8,7 +8,7 @@ def main(model_config = None):
         'dataset_test': '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/test',
         "state": "train",  # or eval
         "epoch": args.epoches,
-        "warmup_epoch": args.warmup_epoches,
+        "warmup_epoches": args.warmup_epoches,
         "batch_size": 1,
         "n_window":args.n_window,
         "window_embd":args.window_embd,
