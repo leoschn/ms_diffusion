@@ -376,10 +376,8 @@ if __name__ == '__main__':
     with open(sys.argv[1], 'r') as f:
         f_name = f.readline()
         if not (os.path.exists(f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{f_name}.pkl')):
-            try :
-                data_out = build_image_ms2_mzml(f'/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/{f_name}.mzML',f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{f_name}.pkl')
-            except:
-                print(f_name)
+            data_out = build_image_ms2_mzml(f'/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/{f_name}.mzML',f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{f_name}.pkl')
+
     # print('building image')
     # sample_list = glob.glob('/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/**.mzML', recursive=True)
     # random.shuffle(sample_list)
