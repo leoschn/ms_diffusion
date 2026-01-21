@@ -12,7 +12,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # from pyRawMSDataReader.pyRawMSDataReader.WiffFileReader_py import WiffFileReader
 import numpy as np
 import pickle
-
+import pymzml
 
 
 #
@@ -251,9 +251,7 @@ import pickle
 
 
 def build_image_ms2_mzml(path_mzml, out_path=None, bin_mz=1.0):
-    import numpy as np
-    import pickle
-    import pymzml
+
 
     # ----------------------------
     # 1. Load mzML
