@@ -1,4 +1,4 @@
-from Diffusion import train_ms, eval_ms
+from Diffusion import train_ms_bf16, eval_ms, train_ms_f16
 from config import load_args
 
 def main(model_config = None):
@@ -16,7 +16,7 @@ def main(model_config = None):
         "im_size": (512,1024),
         "channel": 128,
         "channel_mult": [1, 2, 3, 4],
-        "attn": [2],
+        "attn": [args.attention],
         "num_res_blocks": 2,
         "dropout": 0.15,
         "lr": 1e-4,
@@ -32,12 +32,17 @@ def main(model_config = None):
         "sampledNoisyImgName": "NoisyNoGuidenceImgs",
         "sampledImgName": "sampled_ms_image",
         "nrow": 8,
-        "inter_eval":args.eval_inter
+        "inter_eval":args.eval_inter,
+        "amp":args.amp,
+        "model":args.model,
     }
     if model_config is not None:
         modelConfig = model_config
 
-    train_ms(modelConfig)
+    if model_config["amp"]=='f16':
+        train_ms_f16.train_ms(modelConfig)
+    else :
+        train_ms_bf16.train_ms(modelConfig)
     # eval_ms(modelConfig)
 
 

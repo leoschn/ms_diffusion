@@ -5,16 +5,13 @@ import wandb
 import torch
 import torch.optim as optim
 from torch.amp import autocast
-from torch.cuda.amp import GradScaler
 from torch.distributed import init_process_group, destroy_process_group
 from torchvision.datasets.samplers import DistributedSampler
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from torchvision import transforms
-from torchvision.datasets import CIFAR10
 from torchvision.utils import save_image
-from wandb.cli.cli import offline
 
+import Diffusion
 from Diffusion import GaussianDiffusionSampler_ms, GaussianDiffusionTrainer_ms
 from Diffusion import UNet
 from dataset.ms_dataset import ms_dataset
@@ -60,10 +57,21 @@ def train_ms(modelConfig: Dict):
         pin_memory=True, sampler=sampler_test)
 
     #model
-    net_model = UNet(T=modelConfig["T"], ch=modelConfig["channel"], ch_mult=modelConfig["channel_mult"],
-                     attn=modelConfig["attn"],
-                     num_res_blocks=modelConfig["num_res_blocks"], dropout=modelConfig["dropout"],
-                     window_embedding=modelConfig["window_embd"], n_window=modelConfig["n_window"]).to(device)
+    if modelConfig["model"] is 'v1':
+        net_model = Diffusion.model_ms.UNet(T=modelConfig["T"], ch=modelConfig["channel"], ch_mult=modelConfig["channel_mult"],
+                         attn=modelConfig["attn"],
+                         num_res_blocks=modelConfig["num_res_blocks"], dropout=modelConfig["dropout"],
+                         window_embedding=modelConfig["window_embd"], n_window=modelConfig["n_window"]).to(device)
+    elif modelConfig["model"]=='v2':
+        net_model = Diffusion.model_ms_v2.UNet(T=modelConfig["T"], ch=modelConfig["channel"],
+                                            ch_mult=modelConfig["channel_mult"],
+                                            attn=modelConfig["attn"],
+                                            num_res_blocks=modelConfig["num_res_blocks"],
+                                            dropout=modelConfig["dropout"],
+                                            window_embedding=modelConfig["window_embd"],
+                                            n_window=modelConfig["n_window"]).to(device)
+    else:
+        raise 'model not found'
     net_model.apply(lambda m: setattr(m, 'weight', m.weight.contiguous())
     if hasattr(m, 'weight') else None)
     net_model = torch.nn.parallel.DistributedDataParallel(net_model,device_ids=[local_rank],
