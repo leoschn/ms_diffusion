@@ -16,7 +16,7 @@ def main(model_config = None):
         "im_size": (512,1024),
         "channel": 128,
         "channel_mult": [1, 2, 3, 4],
-        "attn": [args.attention],
+        "attn": [args.attn],
         "num_res_blocks": 2,
         "dropout": 0.15,
         "lr": 1e-4,
