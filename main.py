@@ -39,7 +39,7 @@ def main(model_config = None):
     if model_config is not None:
         modelConfig = model_config
 
-    if model_config["amp"]=='f16':
+    if modelConfig["amp"]=='f16':
         train_ms_f16.train_ms(modelConfig)
     else :
         train_ms_bf16.train_ms(modelConfig)
