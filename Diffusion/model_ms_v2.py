@@ -194,11 +194,12 @@ class UNet(nn.Module):
         num_res_blocks,
         dropout,
         n_window,
+        window_embedding,
     ):
         super().__init__()
 
         tdim = ch * 4
-
+        self.has_window_embedding = window_embedding
         self.time_emb = TimeEmbedding(T, ch, tdim)
         if self.has_window_embedding == 'categorical':
             self.window_embedding = WindowEmbedding(n_window, ch, tdim)
