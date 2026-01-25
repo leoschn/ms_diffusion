@@ -269,7 +269,7 @@ class UNet(nn.Module):
 
     def forward(self, x, t, cond, window):
         temb = self.time_emb(t)
-        wemb = self.window_emb(window)
+        wemb = self.window_embedding(window)
 
         h = self.x_head(x)
         hc = self.cond_head(cond)
