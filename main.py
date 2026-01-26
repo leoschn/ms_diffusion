@@ -40,7 +40,7 @@ def main(model_config = None):
         modelConfig = model_config
 
     if modelConfig["amp"]=='f16':
-        if modelConfig["schema"] == 'DDM':
+        if modelConfig["schema"] == 'DDP':
             train_ms_f16.train_ms(modelConfig)
         elif modelConfig["schema"] == 'FSDP2':
             train_ms_f16_FSDP2.train_ms(modelConfig)
