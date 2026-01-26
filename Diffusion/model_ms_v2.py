@@ -214,8 +214,9 @@ class UNet(nn.Module):
         else:
             self.window_embedding = ZeroLinear(ch)
 
-        self.in_head = nn.Conv2d(2, ch, 3, 1, 1)
-        self.cond_projs = nn.ModuleList()
+        self.in_head = nn.Conv2d(1, ch, 3, 1, 1)
+        self.cond_head = nn.Conv2d(1, ch, 3, 1, 1)
+        #self.cond_projs = nn.ModuleList()
         self.cond_downsamplers = nn.ModuleList()
 
         self.down = nn.ModuleList()
@@ -235,9 +236,9 @@ class UNet(nn.Module):
                 now_ch = out_ch
                 chs.append(now_ch)
 
-                self.cond_projs.append(
-                    nn.Conv2d(out_ch, out_ch, 1)
-                )
+                # self.cond_projs.append(
+                #     nn.Conv2d(out_ch, out_ch, 1)
+                # )
 
             if i != len(ch_mult) - 1:
                 self.cond_downsamplers.append(
@@ -282,7 +283,7 @@ class UNet(nn.Module):
         hs = [h]
 
         for i, block in enumerate(self.down):
-            h = checkpoint(block, h, temb, wemb, self.cond_projs[i](c))
+            h = checkpoint(block, h, temb, wemb, c) #self.cond_projs[i](c)
             hs.append(h)
 
             if i < len(self.cond_downsamplers):
