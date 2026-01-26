@@ -1,4 +1,4 @@
-from Diffusion import train_ms_bf16, eval_ms, train_ms_f16
+from Diffusion import train_ms_bf16, eval_ms, train_ms_f16, train_ms_f16_FSDP2
 from config import load_args
 
 def main(model_config = None):
@@ -16,7 +16,7 @@ def main(model_config = None):
         "im_size": (256,512),
         "channel": 64,
         "channel_mult": [1, 2, 3, 4],
-        "attn": [args.attn] if args.attn < 4 else None,
+        "attn": [args.attn] if args.attn < 4 else [],
         "num_res_blocks": 2,
         "dropout": 0.15,
         "lr": 1e-4,
@@ -34,14 +34,19 @@ def main(model_config = None):
         "inter_eval":args.eval_inter,
         "amp":args.amp,
         "model":args.model,
+        "schema":args.schema,
     }
     if model_config is not None:
         modelConfig = model_config
 
     if modelConfig["amp"]=='f16':
-        train_ms_f16.train_ms(modelConfig)
+        if modelConfig["schema"] == 'DDM':
+            train_ms_f16.train_ms(modelConfig)
+        elif modelConfig["schema"] == 'FSDP2':
+            train_ms_f16_FSDP2(modelConfig)
     else :
         train_ms_bf16.train_ms(modelConfig)
+
     # eval_ms(modelConfig)
 
 

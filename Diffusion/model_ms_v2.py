@@ -3,6 +3,7 @@ import torch
 from torch import nn
 from torch.nn import init
 from torch.nn import functional as F
+from torch.utils.checkpoint import checkpoint
 
 
 # ------------------------
@@ -171,8 +172,11 @@ class ResBlock(nn.Module):
                 init.zeros_(m.bias)
         init.xavier_uniform_(self.block2[-1].weight, gain=1e-5)
 
-    def forward(self, x, temb, wemb):
+    def forward(self, x, temb, wemb, cond=None):
         h = self.block1(x)
+
+        if cond is not None:
+            h = h + cond
         h += self.temb(temb)[:, :, None, None]
         h += self.wemb(wemb)[:, :, None, None]
         h = self.block2(h)
@@ -190,7 +194,6 @@ class UNet(nn.Module):
         T,
         ch,
         ch_mult,
-        attn,
         num_res_blocks,
         dropout,
         n_window,
@@ -199,22 +202,22 @@ class UNet(nn.Module):
         super().__init__()
 
         tdim = ch * 4
-        self.has_window_embedding = window_embedding
+
+        # embeddings
         self.time_emb = TimeEmbedding(T, ch, tdim)
-        if self.has_window_embedding == 'categorical':
+
+        if window_embedding == 'categorical':
             self.window_embedding = WindowEmbedding(n_window, ch, tdim)
-        elif self.has_window_embedding == 'spacial':
-            self.window_embedding = TimeEmbedding(n_window,ch , tdim)
-        else :
+        elif window_embedding == 'spacial':
+            self.window_embedding = TimeEmbedding(n_window, ch, tdim)
+        else:
             self.window_embedding = ZeroLinear(ch)
 
-        # separate heads
-        self.x_head = nn.Conv2d(1, ch, 3, 1, 1)
-        self.cond_head = nn.Conv2d(1, ch, 3, 1, 1)
+        self.in_head = nn.Conv2d(2, ch, 3, 1, 1)
+        self.cond_projs = nn.ModuleList()
+
 
         self.down = nn.ModuleList()
-        self.cond_down = nn.ModuleList()
-
         chs = [ch]
         now_ch = ch
 
@@ -224,26 +227,22 @@ class UNet(nn.Module):
                 self.down.append(
                     ResBlock(
                         now_ch, out_ch, tdim,
-                        dropout, attn=(i in attn)
-                    )
-                )
-                self.cond_down.append(
-                    ResBlock(
-                        now_ch, out_ch, tdim,
                         dropout, attn=False
                     )
                 )
                 now_ch = out_ch
                 chs.append(now_ch)
 
+                self.cond_projs.append(
+                    nn.Conv2d(out_ch, out_ch, 1)
+                )
             if i != len(ch_mult) - 1:
                 self.down.append(DownSample(now_ch))
-                self.cond_down.append(DownSample(now_ch))
                 chs.append(now_ch)
 
         self.mid = nn.ModuleList([
             ResBlock(now_ch, now_ch, tdim, dropout, attn=True),
-            ResBlock(now_ch, now_ch, tdim, dropout),
+            ResBlock(now_ch, now_ch, tdim, dropout, attn=False),
         ])
 
         self.up = nn.ModuleList()
@@ -252,12 +251,13 @@ class UNet(nn.Module):
             for _ in range(num_res_blocks + 1):
                 self.up.append(
                     ResBlock(
-                        now_ch + chs.pop() * 2,
+                        now_ch + chs.pop(),
                         out_ch, tdim,
-                        dropout, attn=(i in attn)
+                        dropout, attn=False
                     )
                 )
                 now_ch = out_ch
+
             if i != 0:
                 self.up.append(UpSample(now_ch))
 
@@ -272,22 +272,24 @@ class UNet(nn.Module):
         wemb = self.window_embedding(window)
 
         h = self.x_head(x)
-        hc = self.cond_head(cond)
+        c = self.cond_head(cond)
 
-        hs, hcs = [h], [hc]
+        hs = [h]
+        cs = [c]
 
-        for d, cd in zip(self.down, self.cond_down):
-            h = d(h, temb, wemb)
-            hc = cd(hc, temb, wemb)
+        for i, block in enumerate(self.down):
+            h = checkpoint(block, h, temb, wemb, self.cond_projs[i](c))
             hs.append(h)
-            hcs.append(hc)
 
-        for m in self.mid:
-            h = m(h, temb, wemb)
+            if i < len(self.cond_downsamplers):
+                c = self.cond_downsamplers[i](c)
 
-        for u in self.up:
-            if isinstance(u, ResBlock):
-                h = torch.cat([h, hs.pop(), hcs.pop()], dim=1)
-            h = u(h, temb, wemb)
+        for block in self.mid:
+            h = checkpoint(block, h, temb, wemb)
+
+        for block in self.up:
+            if isinstance(block, ResBlock):
+                h = torch.cat([h, hs.pop()], dim=1)
+            h = checkpoint(block, h, temb, wemb)
 
         return self.tail(h)
