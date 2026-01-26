@@ -88,6 +88,10 @@ def train_ms(modelConfig: Dict):
         n_window=modelConfig["n_window"],
     ).to(device)
 
+    #Avoid issues with frozen zero linear layers
+    for p in net_model.parameters():
+        p.requires_grad = True
+
     mp_policy = MixedPrecision(
         param_dtype=torch.float16,
         reduce_dtype=torch.float16,
