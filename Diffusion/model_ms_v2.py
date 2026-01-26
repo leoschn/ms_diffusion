@@ -216,7 +216,7 @@ class UNet(nn.Module):
 
         self.in_head = nn.Conv2d(2, ch, 3, 1, 1)
         self.cond_projs = nn.ModuleList()
-
+        self.cond_downsamplers = nn.ModuleList()
 
         self.down = nn.ModuleList()
         chs = [ch]
@@ -231,15 +231,18 @@ class UNet(nn.Module):
                         dropout, attn=(i in attn)
                     )
                 )
+
                 now_ch = out_ch
                 chs.append(now_ch)
 
                 self.cond_projs.append(
                     nn.Conv2d(out_ch, out_ch, 1)
                 )
+
             if i != len(ch_mult) - 1:
-                self.down.append(DownSample(now_ch))
-                chs.append(now_ch)
+                self.cond_downsamplers.append(
+                    DownSample(out_ch))
+
 
         self.mid = nn.ModuleList([
             ResBlock(now_ch, now_ch, tdim, dropout, attn=True),
@@ -272,11 +275,10 @@ class UNet(nn.Module):
         temb = self.time_emb(t)
         wemb = self.window_embedding(window)
 
-        h = self.x_head(x)
+        h = self.in_head(x)
         c = self.cond_head(cond)
 
         hs = [h]
-        cs = [c]
 
         for i, block in enumerate(self.down):
             h = checkpoint(block, h, temb, wemb, self.cond_projs[i](c))
