@@ -242,6 +242,7 @@ class UNet(nn.Module):
             if i != len(ch_mult) - 1:
                 self.cond_downsamplers.append(
                     DownSample(out_ch))
+                chs.append(now_ch)
 
 
         self.mid = nn.ModuleList([
