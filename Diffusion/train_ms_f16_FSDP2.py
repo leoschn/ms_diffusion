@@ -25,7 +25,7 @@ from Diffusion import GaussianDiffusionTrainer_ms, GaussianDiffusionSampler_ms
 from dataset.ms_dataset import ms_dataset
 from scheduler import GradualWarmupScheduler
 
-def train_ms_fsdp_optionA(modelConfig: Dict):
+def train_ms(modelConfig: Dict):
 
     # -------- SLURM / process setup --------
     rank = int(os.environ["SLURM_PROCID"])

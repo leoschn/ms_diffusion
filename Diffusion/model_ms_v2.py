@@ -192,6 +192,7 @@ class UNet(nn.Module):
     def __init__(
         self,
         T,
+        attn,
         ch,
         ch_mult,
         num_res_blocks,
@@ -227,7 +228,7 @@ class UNet(nn.Module):
                 self.down.append(
                     ResBlock(
                         now_ch, out_ch, tdim,
-                        dropout, attn=False
+                        dropout, attn=(i in attn)
                     )
                 )
                 now_ch = out_ch

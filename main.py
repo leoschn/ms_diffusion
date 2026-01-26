@@ -43,7 +43,7 @@ def main(model_config = None):
         if modelConfig["schema"] == 'DDM':
             train_ms_f16.train_ms(modelConfig)
         elif modelConfig["schema"] == 'FSDP2':
-            train_ms_f16_FSDP2(modelConfig)
+            train_ms_f16_FSDP2.train_ms(modelConfig)
     else :
         train_ms_bf16.train_ms(modelConfig)
 
