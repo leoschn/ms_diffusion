@@ -173,10 +173,13 @@ class ResBlock(nn.Module):
         init.xavier_uniform_(self.block2[-1].weight, gain=1e-5)
 
     def forward(self, x, temb, wemb, cond=None):
-        h = self.block1(x)
 
         if cond is not None:
-            h = h + cond
+            x = x + cond
+
+        h = self.block1(x)
+
+
         h += self.temb(temb)[:, :, None, None]
         h += self.wemb(wemb)[:, :, None, None]
         h = self.block2(h)
