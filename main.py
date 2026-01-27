@@ -1,4 +1,4 @@
-from Diffusion import train_ms_bf16, eval_ms, train_ms_f16, train_ms_f16_FSDP2
+from Diffusion import train_ms_bf16, train_ms_f16, train_ms_f16_FSDP2
 from config import load_args
 
 def main(model_config = None):
