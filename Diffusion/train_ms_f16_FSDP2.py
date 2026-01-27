@@ -77,7 +77,7 @@ def train_ms(modelConfig: Dict):
     )
 
     # -------- Model --------
-    net_model = Diffusion.model_ms.UNet(
+    net_model = Diffusion.model_ms_v2.UNet(
         T=modelConfig["T"],
         ch=modelConfig["channel"],
         ch_mult=modelConfig["channel_mult"],
