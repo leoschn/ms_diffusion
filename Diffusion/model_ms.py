@@ -146,8 +146,6 @@ class ResBlock(nn.Module):
             nn.Conv2d(in_ch, out_ch, 3, stride=1, padding=1),
         )
 
-
-
         self.temb_proj = nn.Sequential(
             Swish(),
             nn.Linear(tdim, out_ch),

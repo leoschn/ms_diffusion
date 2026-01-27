@@ -17,7 +17,6 @@ from wandb.cli.cli import offline
 
 import Diffusion
 from Diffusion import GaussianDiffusionSampler_ms, GaussianDiffusionTrainer_ms
-from Diffusion import UNet
 from dataset.ms_dataset import ms_dataset
 from scheduler import GradualWarmupScheduler
 
@@ -62,7 +61,7 @@ def train_ms(modelConfig: Dict):
 
     #model
 
-    if modelConfig["model"] is 'v1':
+    if modelConfig["model"] == 'v1':
         net_model = Diffusion.model_ms.UNet(T=modelConfig["T"], ch=modelConfig["channel"], ch_mult=modelConfig["channel_mult"],
                          attn=modelConfig["attn"],
                          num_res_blocks=modelConfig["num_res_blocks"], dropout=modelConfig["dropout"],

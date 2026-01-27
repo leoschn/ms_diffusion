@@ -82,13 +82,25 @@ class WindowEmbedding(nn.Module):
 class DownSample(nn.Module):
     def __init__(self, ch):
         super().__init__()
-        self.conv = nn.Conv2d(ch, ch, 3, 2, 1)
+        self.conv_x = nn.Conv2d(ch, ch, 3, 2, 1)
+        init.xavier_uniform_(self.conv_x.weight)
+        init.zeros_(self.conv_x.bias)
+        self.conv_c = nn.Conv2d(ch, ch, 3, 2, 1)
+        init.xavier_uniform_(self.conv_c.weight)
+        init.zeros_(self.conv_c.bias)
+
+    def forward(self, x, temb, wemb, cond=None):
+        return self.conv_x(x),self.conv_c(cond)
+
+class ChannelProjection(nn.Module):
+    def __init__(self, in_ch,out_ch):
+        super().__init__()
+        self.conv = nn.Conv2d(in_ch, out_ch, 1)
         init.xavier_uniform_(self.conv.weight)
         init.zeros_(self.conv.bias)
 
-    def forward(self, x, *_):
-        return self.conv(x)
-
+    def forward(self, x, temb, wemb, cond=None):
+        return x, self.conv(cond)
 
 class UpSample(nn.Module):
     def __init__(self, ch):
@@ -99,7 +111,7 @@ class UpSample(nn.Module):
 
     def forward(self, x, *_):
         x = F.interpolate(x, scale_factor=2, mode="nearest")
-        return self.conv(x)
+        return self.conv(x),None
 
 
 class AttnBlock(nn.Module):
@@ -173,18 +185,14 @@ class ResBlock(nn.Module):
         init.xavier_uniform_(self.block2[-1].weight, gain=1e-5)
 
     def forward(self, x, temb, wemb, cond=None):
-
         if cond is not None:
             x = x + cond
-
         h = self.block1(x)
-
-
         h += self.temb(temb)[:, :, None, None]
         h += self.wemb(wemb)[:, :, None, None]
         h = self.block2(h)
         h = h + self.shortcut(x)
-        return self.attn(h)
+        return self.attn(h),cond
 
 
 # ------------------------
@@ -192,17 +200,7 @@ class ResBlock(nn.Module):
 # ------------------------
 
 class UNet(nn.Module):
-    def __init__(
-        self,
-        T,
-        attn,
-        ch,
-        ch_mult,
-        num_res_blocks,
-        dropout,
-        n_window,
-        window_embedding,
-    ):
+    def __init__(self, T, attn, ch, ch_mult, num_res_blocks, dropout, n_window, window_embedding):
         super().__init__()
 
         tdim = ch * 4
@@ -219,9 +217,6 @@ class UNet(nn.Module):
 
         self.in_head = nn.Conv2d(1, ch, 3, 1, 1)
         self.cond_head = nn.Conv2d(1, ch, 3, 1, 1)
-        #self.cond_projs = nn.ModuleList()
-        self.cond_downsamplers = nn.ModuleList()
-
         self.down = nn.ModuleList()
         chs = [ch]
         now_ch = ch
@@ -230,40 +225,28 @@ class UNet(nn.Module):
             out_ch = ch * mult
             for _ in range(num_res_blocks):
                 self.down.append(
-                    ResBlock(
-                        now_ch, out_ch, tdim,
-                        dropout, attn=(i in attn)
-                    )
+                    ResBlock(now_ch, out_ch, tdim, dropout, attn=(i in attn))
                 )
-
+                if now_ch!=out_ch:
+                    self.down.append(ChannelProjection(now_ch, out_ch))
                 now_ch = out_ch
                 chs.append(now_ch)
 
-                # self.cond_projs.append(
-                #     nn.Conv2d(out_ch, out_ch, 1)
-                # )
-
             if i != len(ch_mult) - 1:
-                self.cond_downsamplers.append(
-                    DownSample(out_ch))
+                self.down.append(DownSample(now_ch))
                 chs.append(now_ch)
-
 
         self.mid = nn.ModuleList([
             ResBlock(now_ch, now_ch, tdim, dropout, attn=True),
             ResBlock(now_ch, now_ch, tdim, dropout, attn=False),
         ])
-
         self.up = nn.ModuleList()
+
         for i, mult in reversed(list(enumerate(ch_mult))):
             out_ch = ch * mult
             for _ in range(num_res_blocks + 1):
                 self.up.append(
-                    ResBlock(
-                        now_ch + chs.pop(),
-                        out_ch, tdim,
-                        dropout, attn=False
-                    )
+                    ResBlock(now_ch + chs.pop(), out_ch, tdim, dropout, attn=False)
                 )
                 now_ch = out_ch
 
@@ -276,6 +259,7 @@ class UNet(nn.Module):
             nn.Conv2d(now_ch, 1, 3, 1, 1),
         )
 
+
     def forward(self, x, t, cond, window):
         temb = self.time_emb(t)
         wemb = self.window_embedding(window)
@@ -286,18 +270,16 @@ class UNet(nn.Module):
         hs = [h]
 
         for i, block in enumerate(self.down):
-            h = checkpoint(block, h, temb, wemb, c) #self.cond_projs[i](c)
-            hs.append(h)
-
-            if i < len(self.cond_downsamplers):
-                c = self.cond_downsamplers[i](c)
+            h,c = checkpoint(block, h, temb, wemb, c)
+            if isinstance(block, (ResBlock,DownSample)):
+                hs.append(h)
 
         for block in self.mid:
-            h = checkpoint(block, h, temb, wemb)
+            h,_ = checkpoint(block, h, temb, wemb, None)
 
         for block in self.up:
             if isinstance(block, ResBlock):
                 h = torch.cat([h, hs.pop()], dim=1)
-            h = checkpoint(block, h, temb, wemb)
+            h,_ = checkpoint(block, h, temb, wemb, None)
 
         return self.tail(h)
