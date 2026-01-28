@@ -133,7 +133,7 @@ def train_ms(modelConfig: Dict):
             # train
             optimizer.zero_grad(set_to_none=True)
 
-            with autocast(device_type="cuda", dtype=torch.float16):
+            with autocast(device_type="cuda", dtype=torch.float16,enabled=False):
                 cond = cond.to(device, non_blocking=True)
                 x_0 = images.to(device, non_blocking=True)
                 wind = wind.to(device, non_blocking=True)
