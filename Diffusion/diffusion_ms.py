@@ -49,7 +49,7 @@ class GaussianDiffusionTrainer_ms(nn.Module):
 class GaussianDiffusionSampler_ms(nn.Module):
     def __init__(self, model, beta_1, beta_T, T):
         super().__init__()
-
+        eps = 1e-20
         self.model = model
         self.T = T
 
@@ -59,9 +59,9 @@ class GaussianDiffusionSampler_ms(nn.Module):
         alphas_bar_prev = F.pad(alphas_bar, [1, 0], value=1)[:T]
 
         self.register_buffer('coeff1', torch.sqrt(1. / alphas))
-        self.register_buffer('coeff2', self.coeff1 * (1. - alphas) / torch.sqrt(1. - alphas_bar))
+        self.register_buffer('coeff2', self.coeff1 * (1. - alphas) / torch.sqrt(1. - alphas_bar + eps))
 
-        self.register_buffer('posterior_var', self.betas * (1. - alphas_bar_prev) / (1. - alphas_bar))
+        self.register_buffer('posterior_var', self.betas * (1. - alphas_bar_prev) / (1. - alphas_bar+ eps))
 
     def predict_xt_prev_mean_from_eps(self, x_t, t, eps):
         assert x_t.shape == eps.shape

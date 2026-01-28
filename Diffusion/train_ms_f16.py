@@ -184,12 +184,11 @@ def train_ms(modelConfig: Dict):
 
 
 
-                    with autocast(device_type='cuda', dtype=torch.float16,enabled=True):
-                        cond = cond.to(device)
-                        images = images.to(device)
-                        wind = wind.int().to(device)
-                        noisyImage = torch.randn_like(images[:, :1, :, :])
-                        sampledImgs = sampler(noisyImage, cond, wind)
+                    cond = cond.to(device)
+                    images = images.to(device)
+                    wind = wind.int().to(device)
+                    noisyImage = torch.randn_like(images[:, :1, :, :])
+                    sampledImgs = sampler(noisyImage, cond, wind)
                     mse_loss = mse_loss_fct(sampledImgs, images)
                     psnr_loss = 10 * torch.log10(1 / mse_loss)
 
