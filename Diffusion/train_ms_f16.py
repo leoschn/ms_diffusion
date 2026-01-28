@@ -157,7 +157,7 @@ def train_ms(modelConfig: Dict):
                 pbar.set_postfix(ordered_dict={
                     "epoch": e,
                     "loss: ": total_loss/i,
-                    "img shape: ": x_0.shape,
+                    "img shape: ": x_0.size(),
                     "LR": lr
                 })
         if rank == 0:
