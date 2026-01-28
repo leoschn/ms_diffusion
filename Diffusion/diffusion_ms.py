@@ -18,7 +18,7 @@ def extract(v, t, x_shape):
 class GaussianDiffusionTrainer_ms(nn.Module):
     def __init__(self, model, beta_1, beta_T, T):
         super().__init__()
-
+        eps = 1e-20
         self.model = model
         self.T = T
 
@@ -31,7 +31,7 @@ class GaussianDiffusionTrainer_ms(nn.Module):
         self.register_buffer(
             'sqrt_alphas_bar', torch.sqrt(alphas_bar))
         self.register_buffer(
-            'sqrt_one_minus_alphas_bar', torch.sqrt(1. - alphas_bar))
+            'sqrt_one_minus_alphas_bar', torch.sqrt(1. - alphas_bar + eps))
 
     def forward(self, x_0, cond, wind):
         """

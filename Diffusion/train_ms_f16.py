@@ -152,6 +152,7 @@ def train_ms(modelConfig: Dict):
 
             if rank == 0:
                 i += 1
+                total_loss+=loss.item()
                 lr = warmUpScheduler.get_lr()[0]
                 pbar.set_postfix(ordered_dict={
                     "epoch": e,
