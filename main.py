@@ -9,7 +9,7 @@ def main(model_config = None):
         "state": "train",  # or eval
         "epoch": args.epoches,
         "warmup_epoches": args.warmup_epoches,
-        "batch_size": 1,
+        "batch_size": args.batch_size,
         "n_window":args.n_window,
         "window_embd":args.window_embd,
         "T": 1000,
