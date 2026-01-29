@@ -3,9 +3,23 @@ import os
 import pickle
 from pathlib import Path
 from typing import Union, Optional, Callable
+
+import torch
 import torchvision.transforms as transforms
 from torchvision.datasets import DatasetFolder
 from tqdm import tqdm
+
+class CropTransform:
+    def __init__(self, top: int, left: int, height: int, width: int):
+        self.top = top
+        self.left = left
+        self.height = height
+        self.width = width
+
+    def __call__(self, image:torch.Tensor) -> torch.Tensor:
+        return image[self.top:self.top+self.height, self.left:self.left+self.width]
+
+
 
 def pkl_loader(path):
     with open(path, 'rb') as f:
@@ -19,6 +33,7 @@ class ms_dataset(DatasetFolder):
         self.loader = pkl_loader
         self.transform_img = transforms.Compose([transforms.ToTensor(),
                                              transforms.Normalize((1.44), (1.19)),
+                                             CropTransform(top=90, left=0, height=422, width=1024),
                                              transforms.Resize(im_size)])
         self.transform_cond = transforms.Compose([transforms.ToTensor(),
                                              transforms.Resize(im_size)])

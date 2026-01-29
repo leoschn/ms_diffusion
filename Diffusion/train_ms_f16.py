@@ -169,54 +169,55 @@ def train_ms(modelConfig: Dict):
                 modelConfig["save_weight_dir"], 'ckpt_' + str(e) + "_.pt"))
 
 
-    net_model.eval()
+        if e%modelConfig["inter_eval"]==modelConfig["inter_eval"]-1:
+            net_model.eval()
 
-    with torch.no_grad():
-        n_image = 0
-        if rank == 0:
-            pbar_test =  tqdm(dataloader_test, dynamic_ncols=True)
-        else :
-            pbar_test = dataloader_test
-        total_mse = 0
-        total_psnr = 0
-        for images, cond ,path ,wind in pbar_test:
-            n_image+=1
-            f_name = os.path.basename(path[0]).replace('.pkl', '')
-
-
-
-            cond = cond.to(device)
-            images = images.to(device)
-            wind = wind.int().to(device)
-            noisyImage = torch.randn_like(images[:, :1, :, :])
-            sampledImgs = sampler(noisyImage, cond, wind)
-            mse_loss = mse_loss_fct(sampledImgs, images)
-            psnr_loss = 10 * torch.log10(1 / mse_loss)
+            with torch.no_grad():
+                n_image = 0
+                if rank == 0:
+                    pbar_test =  tqdm(dataloader_test, dynamic_ncols=True)
+                else :
+                    pbar_test = dataloader_test
+                total_mse = 0
+                total_psnr = 0
+                for images, cond ,path ,wind in pbar_test:
+                    n_image+=1
+                    f_name = os.path.basename(path[0]).replace('.pkl', '')
 
 
-            total_mse += mse_loss.item()
-            total_psnr += psnr_loss.item()
+
+                    cond = cond.to(device)
+                    images = images.to(device)
+                    wind = wind.int().to(device)
+                    noisyImage = torch.randn_like(images[:, :1, :, :])
+                    sampledImgs = sampler(noisyImage, cond, wind)
+                    mse_loss = mse_loss_fct(sampledImgs, images)
+                    psnr_loss = 10 * torch.log10(1 / mse_loss)
 
 
-            os.makedirs(modelConfig["sampled_dir"], exist_ok=True)
-            arr = sampledImgs.cpu().numpy()
-            with open( os.path.join(
-                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'),'wb') as f:
-                pickle.dump(arr, f)
-            save_image(sampledImgs, os.path.join(
-                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),
-                       nrow=modelConfig["nrow"])
-            if rank == 0:
-                run.log({'sampled image': wandb.Image(os.path.join(
-                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'))})
-        print(f"mse loss gpu {rank} epoch {e}: ", total_mse / n_image)
-        print(f"psnr loss gpu {rank} epoch {e}:", total_psnr / n_image)
-        if rank == 0:
-            run.log({
-                "epoch_eval": e,
-                "loss_eval": total_mse / n_image,
-                "psnr_eval": total_psnr / n_image
-            })
+                    total_mse += mse_loss.item()
+                    total_psnr += psnr_loss.item()
+
+
+                    os.makedirs(modelConfig["sampled_dir"], exist_ok=True)
+                    arr = sampledImgs.cpu().numpy()
+                    with open( os.path.join(
+                        modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'),'wb') as f:
+                        pickle.dump(arr, f)
+                    save_image(sampledImgs, os.path.join(
+                        modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),
+                               nrow=modelConfig["nrow"])
+                    if rank == 0:
+                        run.log({'sampled image': wandb.Image(os.path.join(
+                        modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'))})
+                print(f"mse loss gpu {rank} epoch {e}: ", total_mse / n_image)
+                print(f"psnr loss gpu {rank} epoch {e}:", total_psnr / n_image)
+                if rank == 0:
+                    run.log({
+                        "epoch_eval": e,
+                        "loss_eval": total_mse / n_image,
+                        "psnr_eval": total_psnr / n_image
+                    })
 
     if rank == 0:
         run.finish()
