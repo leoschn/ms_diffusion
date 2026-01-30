@@ -26,7 +26,7 @@ def main(model_config = None):
         "beta_T": 0.02,
         "grad_clip": 1.,
         "training_load_weight": None,
-        "save_weight_dir": "./Checkpoints/",
+        "save_weight_dir": args.checkpoint,
         "sampled_dir": args.save_dir,
         "sampledNoisyImgName": "NoisyNoGuidenceImgs",
         "sampledImgName": "sampled_ms_image",

@@ -18,6 +18,7 @@ def load_args():
     parser.add_argument('--amp', type=str, default='f16')
     parser.add_argument('--model', type=str, default='v2')
     parser.add_argument('--schema', type=str, default='FSDP2')
+    parser.add_argument('--checkpoint', type=str, default='./Checkpoints/temp')
     args = parser.parse_args()
 
     return args
