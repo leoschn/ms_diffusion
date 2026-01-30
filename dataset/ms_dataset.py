@@ -65,7 +65,7 @@ class ms_dataset(DatasetFolder):
             if file_name.endswith(valid_ext):
                 if self.window =='all':
                     instances.append(file_name)
-                elif self.window in file_name:
+                elif 'ms2_'+self.window in file_name:
                     instances.append(file_name)
 
         return instances
