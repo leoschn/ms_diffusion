@@ -46,13 +46,13 @@ def train_ms(modelConfig: Dict):
     scaler = GradScaler()
     device = torch.device(f"cuda:{local_rank}")
     #train data
-    dataset_train = ms_dataset(root=modelConfig["dataset_train"],im_size=modelConfig["im_size"])
+    dataset_train = ms_dataset(root=modelConfig["dataset_train"],im_size=modelConfig["im_size"],window=modelConfig["dataset_window"])
     sampler_train=DistributedSampler(dataset_train,shuffle=True)
     dataloader_train = DataLoader(
         dataset_train, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=3, drop_last=True, pin_memory=True,sampler=sampler_train)
 
     #test data
-    dataset_test = ms_dataset(root=modelConfig["dataset_test"],im_size=modelConfig["im_size"])
+    dataset_test = ms_dataset(root=modelConfig["dataset_test"],im_size=modelConfig["im_size"],window=modelConfig["dataset_window"])
     sampler_test = DistributedSampler(dataset_test, shuffle=True)
     sampler_test.set_epoch(0)
     dataloader_test = DataLoader(
