@@ -30,8 +30,9 @@ def pkl_loader(path):
     return sample
 
 class ms_dataset(DatasetFolder):
-    def __init__(self, root, im_size=(512,1024)):
+    def __init__(self, root, im_size=(512,1024), window = 'all'):
         self.root = root
+        self.window = window
         self.instances = self.make_dataset('.pkl')
         self.loader = pkl_loader
         self.transform_img = transforms.Compose([transforms.ToTensor(),
@@ -62,6 +63,9 @@ class ms_dataset(DatasetFolder):
         file_names = glob.glob(os.path.join(self.root, '*'))
         for file_name in file_names:
             if file_name.endswith(valid_ext):
-                instances.append(file_name)
+                if self.window =='all':
+                    instances.append(file_name)
+                elif self.window in file_name:
+                    instances.append(file_name)
 
         return instances
