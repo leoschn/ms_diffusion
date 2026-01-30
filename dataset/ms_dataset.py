@@ -32,7 +32,7 @@ def pkl_loader(path):
 class ms_dataset(DatasetFolder):
     def __init__(self, root, im_size=(512,1024), window = 'all'):
         self.root = root
-        self.window = window
+        self.window = str(window)
         self.instances = self.make_dataset('.pkl')
         self.loader = pkl_loader
         self.transform_img = transforms.Compose([transforms.ToTensor(),
