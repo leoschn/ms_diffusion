@@ -16,10 +16,13 @@ class CropTransform:
         self.height = height
         self.width = width
 
-    def __call__(self, image:torch.Tensor) -> torch.Tensor:
-        return image[self.top:self.top+self.height, self.left:self.left+self.width]
-
-
+    def __call__(self, image: torch.Tensor) -> torch.Tensor:
+        if image.dim() == 2:  # (H, W)
+            return image[self.top:self.top + self.height,self.left:self.left + self.width]
+        elif image.dim() == 3:  # (C, H, W)
+            return image[:,self.top:self.top + self.height,self.left:self.left + self.width]
+        else:
+            raise ValueError("Unsupported image shape")
 
 def pkl_loader(path):
     with open(path, 'rb') as f:
@@ -33,6 +36,7 @@ class ms_dataset(DatasetFolder):
         self.loader = pkl_loader
         self.transform_img = transforms.Compose([transforms.ToTensor(),
                                              transforms.Normalize((1.44), (1.19)),
+                                             CropTransform(top=90, left=0, height=422, width=1024),
                                              transforms.Resize(im_size)])
         self.transform_cond = transforms.Compose([transforms.ToTensor(),
                                              transforms.Resize(im_size)])
