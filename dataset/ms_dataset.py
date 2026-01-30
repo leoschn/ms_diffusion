@@ -33,7 +33,6 @@ class ms_dataset(DatasetFolder):
         self.loader = pkl_loader
         self.transform_img = transforms.Compose([transforms.ToTensor(),
                                              transforms.Normalize((1.44), (1.19)),
-                                             CropTransform(top=90, left=0, height=422, width=1024),
                                              transforms.Resize(im_size)])
         self.transform_cond = transforms.Compose([transforms.ToTensor(),
                                              transforms.Resize(im_size)])
