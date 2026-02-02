@@ -20,6 +20,13 @@ from Diffusion import GaussianDiffusionSampler_ms, GaussianDiffusionTrainer_ms
 from dataset.ms_dataset import ms_dataset
 from scheduler import GradualWarmupScheduler
 
+
+def ddp_mean(value, device):
+    t = torch.tensor(value, device=device, dtype=torch.float32)
+    torch.distributed.all_reduce(t, op=torch.distributed.ReduceOp.SUM)
+    t /= torch.distributed.get_world_size()
+    return t.item()
+
 def train_ms(modelConfig: Dict):
 
 
@@ -49,8 +56,7 @@ def train_ms(modelConfig: Dict):
     dataset_train = ms_dataset(root=modelConfig["dataset_train"],im_size=modelConfig["im_size"],window=modelConfig["dataset_window"])
     sampler_train=DistributedSampler(dataset_train,shuffle=True)
     dataloader_train = DataLoader(
-        dataset_train, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=3, drop_last=True,
-        pin_memory=True,sampler=sampler_train)
+        dataset_train, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=3, drop_last=True, pin_memory=True,sampler=sampler_train)
 
     #test data
     dataset_test = ms_dataset(root=modelConfig["dataset_test"],im_size=modelConfig["im_size"],window=modelConfig["dataset_window"])
@@ -210,14 +216,22 @@ def train_ms(modelConfig: Dict):
                                nrow=modelConfig["nrow"])
                     run.log({'sampled image': wandb.Image(os.path.join(
                     modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'))})
+
                 print(f"mse loss gpu {rank} epoch {e}: ", total_mse / n_image)
                 print(f"psnr loss gpu {rank} epoch {e}:", total_psnr / n_image)
+                local_mse = total_mse / n_image
+                local_psnr = total_psnr / n_image
+
+                mean_mse = ddp_mean(local_mse, device)
+                mean_psnr = ddp_mean(local_psnr, device)
+
                 if rank == 0:
                     run.log({
                         "epoch_eval": e,
-                        "loss_eval": total_mse / n_image,
-                        "psnr_eval": total_psnr / n_image
+                        "loss_eval": mean_mse,
+                        "psnr_eval": mean_psnr
                     })
+            torch.distributed.barrier()
 
     if rank == 0:
         run.finish()
