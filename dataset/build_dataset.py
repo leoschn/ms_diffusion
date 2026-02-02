@@ -372,7 +372,7 @@ def main():
     #             out_dir='/lustre/fsn1/projects/rech/bun/ucg81ws/pairs/',
     #             sample_name=sample_name)
 
-    sample_list = glob.glob('/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/**.mzML', recursive=True)
+    sample_list = glob.glob('/lustre/fsn1/projects/rech/bun/ucg81ws/image/**.pkl', recursive=True)
     for f_name in sample_list:
         # if not os.path.exists(f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl'):
         sample_name = os.path.basename(f_name).split('.mzML')[0]
