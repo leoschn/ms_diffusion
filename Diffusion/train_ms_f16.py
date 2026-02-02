@@ -49,7 +49,8 @@ def train_ms(modelConfig: Dict):
     dataset_train = ms_dataset(root=modelConfig["dataset_train"],im_size=modelConfig["im_size"],window=modelConfig["dataset_window"])
     sampler_train=DistributedSampler(dataset_train,shuffle=True)
     dataloader_train = DataLoader(
-        dataset_train, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=3, drop_last=True, pin_memory=True,sampler=sampler_train)
+        dataset_train, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=3, drop_last=True,
+        pin_memory=True,sampler=sampler_train)
 
     #test data
     dataset_test = ms_dataset(root=modelConfig["dataset_test"],im_size=modelConfig["im_size"],window=modelConfig["dataset_window"])
@@ -207,9 +208,8 @@ def train_ms(modelConfig: Dict):
                     save_image(sampledImgs, os.path.join(
                         modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),
                                nrow=modelConfig["nrow"])
-                    if rank == 0:
-                        run.log({'sampled image': wandb.Image(os.path.join(
-                        modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'))})
+                    run.log({'sampled image': wandb.Image(os.path.join(
+                    modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'))})
                 print(f"mse loss gpu {rank} epoch {e}: ", total_mse / n_image)
                 print(f"psnr loss gpu {rank} epoch {e}:", total_psnr / n_image)
                 if rank == 0:

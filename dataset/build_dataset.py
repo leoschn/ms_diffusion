@@ -352,8 +352,8 @@ def build_training_pairs(img_path,cond_path,out_dir,sample_name):
     cond_data = pickle.load(open(cond_path, 'rb'))
     assert len(img_data) == len(cond_data)+1
     os.makedirs(out_dir,exist_ok=True)
-    for window in range(1,len(cond_data)):
-        img = img_data[window]
+    for window in range(len(cond_data)):
+        img = img_data[window]+1
         cond = cond_data[window]
         with open(os.path.join(out_dir,f'{sample_name}_ms2_{window}.pkl'), 'wb') as f:
             pickle.dump((img,cond), f)

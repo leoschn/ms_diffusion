@@ -14,6 +14,21 @@ def extract(v, t, x_shape):
     out = torch.gather(v, index=t, dim=0).float().to(device)
     return out.view([t.shape[0]] + [1] * (len(x_shape) - 1))
 
+def dynamic_thresholding(self, x0, percentile=0.995, eps=1e-8):
+    """
+    Imagen-style dynamic thresholding.
+    x0: predicted x_0, shape [B, ...]
+    """
+    B = x0.shape[0]
+    x0_flat = x0.view(B, -1)
+
+    # compute per-sample threshold
+    s = torch.quantile(x0_flat.abs(), percentile, dim=1)
+    s = torch.maximum(s, torch.ones_like(s))  # s >= 1
+    s = s.view(B, *([1] * (x0.dim() - 1)))
+
+    x0 = torch.clamp(x0, -s, s) / (s + eps)
+    return x0
 
 class GaussianDiffusionTrainer_ms(nn.Module):
     def __init__(self, model, beta_1, beta_T, T):
@@ -78,6 +93,7 @@ class GaussianDiffusionSampler_ms(nn.Module):
         var = extract(var, t, x_t.shape)
 
         eps = self.model(x_t, t, cond, wind)
+
         xt_prev_mean = self.predict_xt_prev_mean_from_eps(x_t, t, eps=eps)
 
         return xt_prev_mean, var
