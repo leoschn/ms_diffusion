@@ -16,7 +16,8 @@ from torchvision.utils import save_image
 from wandb.cli.cli import offline
 
 import Diffusion
-from Diffusion import GaussianDiffusionSampler_ms, GaussianDiffusionTrainer_ms
+from Diffusion.diffusion_ms import GaussianDiffusionTrainer_ms, GaussianDiffusionSampler_ms
+from Diffusion.diffusion_ms_dyn import GaussianDiffusionSampler_ms, GaussianDiffusionTrainer_ms
 from dataset.ms_dataset import ms_dataset
 from scheduler import GradualWarmupScheduler
 
@@ -117,11 +118,18 @@ def train_ms(modelConfig: Dict):
     warmUpScheduler = GradualWarmupScheduler(
         optimizer=optimizer, multiplier=modelConfig["multiplier"], warm_epoch=modelConfig["warmup_epoches"],
         after_scheduler=cosineScheduler)
-    trainer = GaussianDiffusionTrainer_ms(
-        net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
+    if modelConfig['thresholding']=='fix':
+        trainer = Diffusion.diffusion_ms.GaussianDiffusionTrainer_ms(
+            net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
 
-    sampler = GaussianDiffusionSampler_ms(
-        net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
+        sampler = Diffusion.diffusion_ms.GaussianDiffusionSampler_ms(
+            net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
+    elif modelConfig['thresholding']=='dyn':
+        trainer = Diffusion.diffusion_ms_dyn.GaussianDiffusionTrainer_ms(
+            net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
+
+        sampler = Diffusion.diffusion_ms_dyn.GaussianDiffusionSampler_ms(
+            net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
     # Sampled from standard normal distribution
     mse_loss_fct = torch.nn.MSELoss()
 

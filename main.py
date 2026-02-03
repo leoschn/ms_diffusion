@@ -35,6 +35,7 @@ def main(model_config = None):
         "amp":args.amp,
         "model":args.model,
         "schema":args.schema,
+        "thresholding":args.thresholding,
     }
     if model_config is not None:
         modelConfig = model_config

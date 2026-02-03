@@ -19,6 +19,7 @@ def load_args():
     parser.add_argument('--model', type=str, default='v2')
     parser.add_argument('--schema', type=str, default='FSDP2')
     parser.add_argument('--checkpoint', type=str, default='./Checkpoints/temp')
+    parser.add_argument('--thresholding', type=str, default='fix')
     args = parser.parse_args()
 
     return args
