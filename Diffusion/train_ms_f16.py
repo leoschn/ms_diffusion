@@ -214,8 +214,9 @@ def train_ms(modelConfig: Dict):
                     save_image(sampledImgs, os.path.join(
                         modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),
                                nrow=modelConfig["nrow"])
-                    run.log({'sampled image': wandb.Image(os.path.join(
-                    modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'))})
+                    if rank == 0:
+                        run.log({'sampled image': wandb.Image(os.path.join(
+                        modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'))})
 
                 print(f"mse loss gpu {rank} epoch {e}: ", total_mse / n_image)
                 print(f"psnr loss gpu {rank} epoch {e}:", total_psnr / n_image)
