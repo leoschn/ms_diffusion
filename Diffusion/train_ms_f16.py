@@ -180,6 +180,7 @@ def train_ms(modelConfig: Dict):
         warmUpScheduler.step()
 
         if rank == 0:
+            os.makedirs(modelConfig["save_weight_dir"], exist_ok=True)
             torch.save(net_model.module.state_dict(), os.path.join(
                 modelConfig["save_weight_dir"], 'ckpt_' + str(e) + "_.pt"))
 
