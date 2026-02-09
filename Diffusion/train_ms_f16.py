@@ -185,7 +185,6 @@ def train_ms(modelConfig: Dict):
                 for images, cond ,path ,wind in pbar_test:
                     batch_size = images.size(0)
                     n_image+=batch_size
-                    f_name = os.path.basename(path[0]).replace('.pkl', '')
 
                     cond = cond.to(device, non_blocking=True)
                     images = images.to(device, non_blocking=True)
@@ -199,20 +198,33 @@ def train_ms(modelConfig: Dict):
                     total_mse += mse_loss.item()*batch_size
                     total_psnr += psnr_loss.item()*batch_size
 
-
-
                     if rank == 0:
                         os.makedirs(modelConfig["sampled_dir"], exist_ok=True)
-                        arr = sampledImgs.cpu().numpy()
-                        with open(os.path.join(
-                                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'), 'wb') as f:
-                            pickle.dump(arr, f)
-                        save_image(sampledImgs, os.path.join(
-                            modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),
-                                   nrow=modelConfig["nrow"])
-                        run.log({'sampled image': wandb.Image(os.path.join(
-                        modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'))})
-                    torch.distributed.barrier()
+
+                        sampled_cpu = sampledImgs.cpu()
+
+                        for i in range(batch_size):
+                            fname = os.path.basename(path[i]).replace('.pkl', '')
+
+                            # save pkl (single image)
+                            arr = sampled_cpu[i].numpy()
+                            with open(
+                                    os.path.join(modelConfig["sampled_dir"], f"{fname}_{e}.pkl"),
+                                    'wb'
+                            ) as f:
+                                pickle.dump(arr, f)
+
+                            # save png (single image)
+                            save_path = os.path.join(
+                                modelConfig["sampled_dir"], f"{fname}_{e}.png"
+                            )
+                            save_image(sampled_cpu[i], save_path)
+
+                            # optional: log only first few to wandb to avoid spam
+                            if i == 0:
+                                run.log({'sampled image': wandb.Image(save_path)})
+
+                torch.distributed.barrier()
 
                 total_mse_tensor = torch.tensor(total_mse, device=device)
                 total_psnr_tensor = torch.tensor(total_psnr, device=device)
