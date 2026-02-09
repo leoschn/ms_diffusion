@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
+
+##FFT analysis
 img_pred = pickle.load(open('../data/pred/RAOORN-11-ANA_100vW_100SPD_ms2_30_3999.pkl', 'rb'))
 img_pred = img_pred[0,0,:,:]
 f_pred = np.fft.fft2(img_pred)
@@ -23,3 +25,7 @@ plt.show()
 # plt.imshow(magnitude_spectrum_ori, cmap='gray')
 # plt.title('Magnitude Spectrum ori')
 # plt.show()
+
+
+###intesity histogram
+
