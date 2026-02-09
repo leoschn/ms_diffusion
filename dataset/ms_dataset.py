@@ -39,7 +39,9 @@ class ms_dataset(DatasetFolder):
                                              transforms.Normalize((1.44), (1.19)),
                                              CropTransform(top=90, left=0, height=422, width=1024),
                                              transforms.Resize(im_size)])
+
         self.transform_cond = transforms.Compose([transforms.ToTensor(),
+                                            CropTransform(top=90, left=0, height=422, width=1024),
                                              transforms.Resize(im_size)])
 
     def __getitem__(self, index: int):
