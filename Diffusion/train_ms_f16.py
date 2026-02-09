@@ -4,16 +4,11 @@ from typing import Dict
 import wandb
 import torch
 import torch.optim as optim
-from torch.amp import autocast
-from torch.cuda.amp import GradScaler
 from torch.distributed import init_process_group, destroy_process_group
 from torchvision.datasets.samplers import DistributedSampler
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from torchvision import transforms
-from torchvision.datasets import CIFAR10
 from torchvision.utils import save_image
-from wandb.cli.cli import offline
 
 import Diffusion
 from Diffusion.diffusion_ms import GaussianDiffusionTrainer_ms, GaussianDiffusionSampler_ms
@@ -21,12 +16,6 @@ from Diffusion.diffusion_ms_dyn import GaussianDiffusionSampler_ms, GaussianDiff
 from dataset.ms_dataset import ms_dataset
 from scheduler import GradualWarmupScheduler
 
-
-def ddp_mean(value, device):
-    t = torch.tensor(value, device=device, dtype=torch.float32)
-    torch.distributed.all_reduce(t, op=torch.distributed.ReduceOp.SUM)
-    t /= torch.distributed.get_world_size()
-    return t.item()
 
 def train_ms(modelConfig: Dict):
 
@@ -51,7 +40,6 @@ def train_ms(modelConfig: Dict):
 
     init_process_group(backend='nccl')
     torch.cuda.set_device(local_rank)
-    scaler = GradScaler()
     device = torch.device(f"cuda:{local_rank}")
     #train data
     dataset_train = ms_dataset(root=modelConfig["dataset_train"],im_size=modelConfig["im_size"],window=modelConfig["dataset_window"])
@@ -61,7 +49,7 @@ def train_ms(modelConfig: Dict):
 
     #test data
     dataset_test = ms_dataset(root=modelConfig["dataset_test"],im_size=modelConfig["im_size"],window=modelConfig["dataset_window"])
-    sampler_test = DistributedSampler(dataset_test, shuffle=True)
+    sampler_test = DistributedSampler(dataset_test, shuffle=False)
     sampler_test.set_epoch(0)
     dataloader_test = DataLoader(
         dataset_test, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=3, drop_last=True,
@@ -148,22 +136,17 @@ def train_ms(modelConfig: Dict):
             # train
             optimizer.zero_grad(set_to_none=True)
 
-            with autocast(device_type="cuda", dtype=torch.float16,enabled=False):
-                cond = cond.to(device, non_blocking=True)
-                x_0 = images.to(device, non_blocking=True)
-                wind = wind.to(device, non_blocking=True)
+            cond = cond.to(device, non_blocking=True)
+            x_0 = images.to(device, non_blocking=True)
+            wind = wind.to(device, non_blocking=True)
 
-                loss = trainer(x_0, cond, wind).sum()
+            loss = trainer(x_0, cond, wind).sum()
 
-            scaler.scale(loss).backward()
-
-            scaler.unscale_(optimizer)
+            loss.backward()
             torch.nn.utils.clip_grad_norm_(
                 net_model.parameters(), modelConfig["grad_clip"]
             )
-
-            scaler.step(optimizer)
-            scaler.update()
+            optimizer.step()
 
             if rank == 0:
                 i += 1
@@ -177,16 +160,19 @@ def train_ms(modelConfig: Dict):
                 })
         if rank == 0:
             run.log({"epoch":e,"loss": total_loss/i,"LR": lr})
+        torch.distributed.barrier()
         warmUpScheduler.step()
 
         if rank == 0:
             os.makedirs(modelConfig["save_weight_dir"], exist_ok=True)
             torch.save(net_model.module.state_dict(), os.path.join(
                 modelConfig["save_weight_dir"], 'ckpt_' + str(e) + "_.pt"))
+        torch.distributed.barrier()
 
 
         if e%modelConfig["inter_eval"]==modelConfig["inter_eval"]-1:
             net_model.eval()
+            sampler_test.set_epoch(e)
 
             with torch.no_grad():
                 n_image = 0
@@ -197,50 +183,56 @@ def train_ms(modelConfig: Dict):
                 total_mse = 0
                 total_psnr = 0
                 for images, cond ,path ,wind in pbar_test:
-                    n_image+=1
+                    batch_size = images.size(0)
+                    n_image+=batch_size
                     f_name = os.path.basename(path[0]).replace('.pkl', '')
 
-
-
-                    cond = cond.to(device)
-                    images = images.to(device)
-                    wind = wind.int().to(device)
+                    cond = cond.to(device, non_blocking=True)
+                    images = images.to(device, non_blocking=True)
+                    wind = wind.int().to(device, non_blocking=True)
                     noisyImage = torch.randn_like(images[:, :1, :, :])
                     sampledImgs = sampler(noisyImage, cond, wind)
                     mse_loss = mse_loss_fct(sampledImgs, images)
                     psnr_loss = 10 * torch.log10(1 / mse_loss)
 
 
-                    total_mse += mse_loss.item()
-                    total_psnr += psnr_loss.item()
+                    total_mse += mse_loss.item()*batch_size
+                    total_psnr += psnr_loss.item()*batch_size
 
 
-                    os.makedirs(modelConfig["sampled_dir"], exist_ok=True)
-                    arr = sampledImgs.cpu().numpy()
-                    with open( os.path.join(
-                        modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'),'wb') as f:
-                        pickle.dump(arr, f)
-                    save_image(sampledImgs, os.path.join(
-                        modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),
-                               nrow=modelConfig["nrow"])
+
                     if rank == 0:
+                        os.makedirs(modelConfig["sampled_dir"], exist_ok=True)
+                        arr = sampledImgs.cpu().numpy()
+                        with open(os.path.join(
+                                modelConfig["sampled_dir"], f_name + '_' + str(e) + '.pkl'), 'wb') as f:
+                            pickle.dump(arr, f)
+                        save_image(sampledImgs, os.path.join(
+                            modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'),
+                                   nrow=modelConfig["nrow"])
                         run.log({'sampled image': wandb.Image(os.path.join(
                         modelConfig["sampled_dir"], f_name + '_' + str(e) + '.png'))})
+                    torch.distributed.barrier()
 
-                print(f"mse loss gpu {rank} epoch {e}: ", total_mse / n_image)
-                print(f"psnr loss gpu {rank} epoch {e}:", total_psnr / n_image)
-                local_mse = total_mse / n_image
-                local_psnr = total_psnr / n_image
+                total_mse_tensor = torch.tensor(total_mse, device=device)
+                total_psnr_tensor = torch.tensor(total_psnr, device=device)
+                total_count_tensor = torch.tensor(n_image, device=device)
 
-                mean_mse = ddp_mean(local_mse, device)
-                mean_psnr = ddp_mean(local_psnr, device)
+                torch.distributed.all_reduce(total_mse_tensor, op=torch.distributed.ReduceOp.SUM)
+                torch.distributed.all_reduce(total_psnr_tensor, op=torch.distributed.ReduceOp.SUM)
+                torch.distributed.all_reduce(total_count_tensor, op=torch.distributed.ReduceOp.SUM)
+
+                mean_mse = total_mse_tensor / total_count_tensor
+                mean_psnr = total_psnr_tensor / total_count_tensor
 
                 if rank == 0:
+                    print(f"[Eval] epoch {e} | mse: {mean_mse.item():.6f} | psnr: {mean_psnr.item():.4f}")
                     run.log({
                         "epoch_eval": e,
-                        "loss_eval": mean_mse,
-                        "psnr_eval": mean_psnr
+                        "loss_eval": mean_mse.item(),
+                        "psnr_eval": mean_psnr.item(),
                     })
+
             torch.distributed.barrier()
 
     if rank == 0:
