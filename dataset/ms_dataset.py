@@ -16,11 +16,11 @@ class CropTransform:
         self.height = height
         self.width = width
 
-    def __call__(self, image: torch.Tensor) -> torch.Tensor:
-        if image.dim() == 2:  # (H, W)
+    def __call__(self, image):
+        if image.ndim == 2:  # (H, W)
             return image[self.top:self.top + self.height,self.left:self.left + self.width]
-        elif image.dim() == 3:  # (C, H, W)
-            return image[:,self.top:self.top + self.height,self.left:self.left + self.width]
+        # elif image.ndim == 3:  # (C, H, W)
+        #     return image[:,self.top:self.top + self.height,self.left:self.left + self.width]
         else:
             raise ValueError("Unsupported image shape")
 
