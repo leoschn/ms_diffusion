@@ -1,13 +1,9 @@
 import glob
 import os
 import pickle
-from pathlib import Path
-from typing import Union, Optional, Callable
-
-import torch
+import numpy as np
 import torchvision.transforms as transforms
 from torchvision.datasets import DatasetFolder
-from tqdm import tqdm
 
 class CropTransform:
     def __init__(self, top: int, left: int, height: int, width: int):
@@ -16,13 +12,20 @@ class CropTransform:
         self.height = height
         self.width = width
 
-    def __call__(self, image):
+    def __call__(self, image: np.ndarray) -> np.ndarray:
         if image.ndim == 2:  # (H, W)
             return image[self.top:self.top + self.height,self.left:self.left + self.width]
         # elif image.ndim == 3:  # (C, H, W)
         #     return image[:,self.top:self.top + self.height,self.left:self.left + self.width]
         else:
             raise ValueError("Unsupported image shape")
+
+class LogTransform:
+    def __init__(self):
+        pass
+
+    def __call__(self, image : np.ndarray) -> np.ndarray:
+        return np.log(image+1)
 
 def pkl_loader(path):
     with open(path, 'rb') as f:
@@ -43,6 +46,7 @@ class ms_dataset(DatasetFolder):
         ])
 
         self.transform_cond = transforms.Compose([
+                                            LogTransform(),
                                             CropTransform(top=90, left=0, height=422, width=1024),
                                             transforms.Resize(im_size),
                                             transforms.ToTensor()])
