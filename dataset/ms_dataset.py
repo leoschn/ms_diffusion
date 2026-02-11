@@ -38,18 +38,20 @@ class ms_dataset(DatasetFolder):
         self.window = str(window)
         self.instances = self.make_dataset('.pkl')
         self.loader = pkl_loader
-        self.transform_img = transforms.Compose([
-                                             CropTransform(top=90, left=0, height=422, width=1024),
-                                             transforms.Resize(im_size),
-                                             transforms.ToTensor(),
+        self.transform_img = None
+        # self.transform_img = transforms.Compose([
+        #                                      CropTransform(top=90, left=0, height=422, width=1024),
+        #                                      transforms.Resize(im_size),
+        #                                      transforms.ToTensor(),
                                              #transforms.Normalize((1.44), (1.19)), #incorrect a recompute after to tensor
-        ])
+        # ])
 
-        self.transform_cond = transforms.Compose([
-                                            LogTransform(),
-                                            CropTransform(top=90, left=0, height=422, width=1024),
-                                            transforms.Resize(im_size),
-                                            transforms.ToTensor()])
+        self.transform_cond = None
+        # self.transform_cond = transforms.Compose([
+        #                                     LogTransform(),
+        #                                     CropTransform(top=90, left=0, height=422, width=1024),
+        #                                     transforms.Resize(im_size),
+        #                                     transforms.ToTensor()])
 
     def __getitem__(self, index: int):
 
