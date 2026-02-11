@@ -80,4 +80,65 @@ def visual_analysis():
     plt.axis('off')               # optional, hide axes
     plt.show()
 
-histo_analysis()
+import numpy as np
+import matplotlib.pyplot as plt
+
+def sweep_compare_magma(img_a, img_b, title="Sweep comparison"):
+    assert img_a.shape == img_b.shape, "Images must have same shape"
+
+    h, w = img_a.shape
+
+    # Shared color scale (important!)
+    vmin = min(img_a.min(), img_b.min())
+    vmax = max(img_a.max(), img_b.max())
+
+    fig, ax = plt.subplots()
+    ax.set_title(title)
+
+    split = w // 2
+    combined = np.zeros_like(img_a)
+    combined[:, :split] = img_a[:, :split]
+    combined[:, split:] = img_b[:, split:]
+
+    im = ax.imshow(
+        combined,
+        cmap='magma',
+        vmin=vmin,
+        vmax=vmax,
+        origin='upper'
+    )
+
+    cbar = plt.colorbar(im, ax=ax)
+    cbar.set_label("Intensity")
+
+    line = ax.axvline(split, color='cyan', linewidth=1)
+
+    ax.axis('off')
+
+    def on_move(event):
+        if event.inaxes != ax or event.xdata is None:
+            return
+
+        x = int(np.clip(event.xdata, 0, w))
+
+        combined[:, :x] = img_a[:, :x]
+        combined[:, x:] = img_b[:, x:]
+
+        im.set_data(combined)
+        line.set_xdata([x, x])
+        fig.canvas.draw_idle()
+
+    fig.canvas.mpl_connect("motion_notify_event", on_move)
+    plt.show()
+
+
+# Example usage
+df_30 = pickle.load(open('../data/test/COLI-194-AER-d200_ms2_30.pkl', 'rb'))
+img_30 = df_30[0][90:512, :]
+zoom_factors = np.array((256, 512)) / np.array(img_30.shape)
+img_30 = zoom(img_30, zoom_factors, order=1)  # linear interpolation
+pred_30 = pickle.load(open('../data/pred/COLI-194-AER-d200_ms2_30_3999.pkl', 'rb'))[0, 0, :, :]
+
+sweep_compare_magma(img_30, pred_30)
+
+# histo_analysis()
