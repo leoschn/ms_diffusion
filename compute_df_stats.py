@@ -24,7 +24,6 @@ def compute_mean_std(dataset, batch_size=64, num_workers=4):
 
     for images, *_ in tqdm(loader):
         # images: (B, C, H, W)
-        images = images.float()
 
         if n_channels is None:
             n_channels = images.size(1)
