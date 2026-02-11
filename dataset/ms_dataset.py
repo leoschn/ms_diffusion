@@ -58,8 +58,8 @@ class ms_dataset(DatasetFolder):
         path = self.instances[index]
         window = int(path.split('_')[-1].split('.')[0])
         sample = self.loader(path)
-        image = sample[0]
-        cond = sample[1]
+        image = np.array(sample[0], copy=True)
+        cond = np.array(sample[1], copy=True)
         if self.transform_img is not None:
             image = self.transform_img(image)
         if self.transform_cond is not None:
