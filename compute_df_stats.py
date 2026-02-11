@@ -1,7 +1,3 @@
-import numpy as np
-# load data
-from dataset.ms_dataset import ms_dataset
-
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm

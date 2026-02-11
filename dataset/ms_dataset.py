@@ -59,8 +59,8 @@ class ms_dataset(DatasetFolder):
         path = self.instances[index]
         window = int(path.split('_')[-1].split('.')[0])
         sample = self.loader(path)
-        image = torch.tensor(sample[0])
-        cond = torch.tensor(sample[1])
+        image = torch.from_numpy(np.array(sample[0], copy=True)).float()
+        cond = torch.from_numpy(np.array(sample[1], copy=True)).float()
         if self.transform_img is not None:
             image = self.transform_img(image)
         if self.transform_cond is not None:
