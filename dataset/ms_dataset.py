@@ -2,6 +2,7 @@ import glob
 import os
 import pickle
 import numpy as np
+import torch
 import torchvision.transforms as transforms
 from torchvision.datasets import DatasetFolder
 
@@ -58,8 +59,8 @@ class ms_dataset(DatasetFolder):
         path = self.instances[index]
         window = int(path.split('_')[-1].split('.')[0])
         sample = self.loader(path)
-        image = np.array(sample[0], copy=True)
-        cond = np.array(sample[1], copy=True)
+        image = torch.tensor(sample[0])
+        cond = torch.tensor(sample[1])
         if self.transform_img is not None:
             image = self.transform_img(image)
         if self.transform_cond is not None:
