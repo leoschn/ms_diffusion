@@ -18,7 +18,7 @@ def compute_mean_std(dataset, batch_size=64, num_workers=4):
     channel_sum = 0.0
     channel_sum_sq = 0.0
 
-    for images, *_ in tqdm(loader):
+    for images, _, _ ,_ in tqdm(loader):
         # images: (B, C, H, W)
 
         if n_channels is None:
@@ -37,6 +37,7 @@ def compute_mean_std(dataset, batch_size=64, num_workers=4):
     std = torch.sqrt(channel_sum_sq / total_pixels - mean ** 2)
 
     return mean, std
+
 
 dataset_train = ms_dataset(root='/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/train',im_size=(256,512),window='all')
 

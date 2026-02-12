@@ -16,8 +16,8 @@ class CropTransform:
     def __call__(self, image: np.ndarray) -> np.ndarray:
         if image.ndim == 2:  # (H, W)
             return image[self.top:self.top + self.height,self.left:self.left + self.width]
-        # elif image.ndim == 3:  # (C, H, W)
-        #     return image[:,self.top:self.top + self.height,self.left:self.left + self.width]
+        elif image.ndim == 3:  # (C, H, W)
+            return image[:,self.top:self.top + self.height,self.left:self.left + self.width]
         else:
             raise ValueError("Unsupported image shape")
 
@@ -39,32 +39,37 @@ class ms_dataset(DatasetFolder):
         self.window = str(window)
         self.instances = self.make_dataset('.pkl')
         self.loader = pkl_loader
-        self.transform_img = None
-        # self.transform_img = transforms.Compose([
-        #                                      CropTransform(top=90, left=0, height=422, width=1024),
-        #                                      transforms.Resize(im_size),
-        #                                      transforms.ToTensor(),
-                                             #transforms.Normalize((1.44), (1.19)), #incorrect a recompute after to tensor
-        # ])
+        # self.transform_img = None
+        self.transform_img = transforms.Compose([
+                                             CropTransform(top=90, left=0, height=422, width=1024),
+                                             transforms.ToTensor(),
+                                             transforms.Resize(im_size),
+                                             #transforms.Normalize((1.0563), (1.0035)), #incorrect a recompute after to tensor
+        ])
 
-        self.transform_cond = None
-        # self.transform_cond = transforms.Compose([
-        #                                     LogTransform(),
-        #                                     CropTransform(top=90, left=0, height=422, width=1024),
-        #                                     transforms.Resize(im_size),
-        #                                     transforms.ToTensor()])
+        # self.transform_cond = None
+        self.transform_cond = transforms.Compose([
+                                            LogTransform(),
+                                            CropTransform(top=90, left=0, height=422, width=1024),
+                                            transforms.ToTensor(),
+                                            transforms.Resize(im_size),
+
+        ])
 
     def __getitem__(self, index: int):
 
         path = self.instances[index]
         window = int(path.split('_')[-1].split('.')[0])
         sample = self.loader(path)
-        image = torch.from_numpy(np.array(sample[0], copy=True)).float()
-        cond = torch.from_numpy(np.array(sample[1], copy=True)).float()
+        image = sample[0]
+        cond = sample[1]
+
         if self.transform_img is not None:
             image = self.transform_img(image)
         if self.transform_cond is not None:
             cond = self.transform_cond(cond)
+
+
         return image, cond, path, window
 
     def __len__(self):
