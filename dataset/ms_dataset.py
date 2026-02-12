@@ -44,7 +44,7 @@ class ms_dataset(DatasetFolder):
                                              CropTransform(top=90, left=0, height=422, width=1024),
                                              transforms.ToTensor(),
                                              transforms.Resize(im_size),
-                                             #transforms.Normalize((1.0563), (1.0035)), #incorrect a recompute after to tensor
+                                             transforms.Normalize((1.0207), (1.0011)), #incorrect a recompute after to tensor
         ])
 
         # self.transform_cond = None
