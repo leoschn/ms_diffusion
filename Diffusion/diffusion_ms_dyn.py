@@ -90,15 +90,15 @@ class GaussianDiffusionSampler_ms(nn.Module):
     # ----------------------------------------------------
     # Imagen-style dynamic thresholding
     # ----------------------------------------------------
-    def dynamic_thresholding(self, x0, percentile=0.995, eps=1e-8):
+    def dynamic_thresholding(self, x0, percentile=0.995):
         B = x0.shape[0]
         x0_flat = x0.view(B, -1)
 
         s = torch.quantile(x0_flat.abs(), percentile, dim=1)
         s = torch.maximum(s, torch.ones_like(s))  # enforce s >= 1
-        s = s.view(B, *([1] * (x0.dim() - 1)))
+        s = s.view(B, *([1] * (x0.dim() - 1))) #(B,C,H,W) => (B,1,1,1)
 
-        return torch.clamp(x0, -s, s) / (s + eps)
+        return torch.clamp(x0, -s, s) / s
 
     # ----------------------------------------------------
     # p(x_{t-1} | x_t)
