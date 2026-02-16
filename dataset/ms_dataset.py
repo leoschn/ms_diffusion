@@ -44,7 +44,8 @@ class ms_dataset(DatasetFolder):
                                              CropTransform(top=90, left=0, height=422, width=1024),
                                              transforms.ToTensor(),
                                              transforms.Resize(im_size),
-                                             transforms.Normalize((1.0207), (1.0011)), #incorrect a recompute after to tensor
+                                             transforms.Normalize((1.0207), (1.0011)), #std 1 mean 0 but lies in roughly [-1 5] => outside pred range
+                                             transforms.Normalize((2.),(3.)), #=> fixes the range even if nor more std 1 mean 0
         ])
 
         # self.transform_cond = None
@@ -53,6 +54,7 @@ class ms_dataset(DatasetFolder):
                                             CropTransform(top=90, left=0, height=422, width=1024),
                                             transforms.ToTensor(),
                                             transforms.Resize(im_size),
+                                            #normalization does not matter for condition mask ?
 
         ])
 

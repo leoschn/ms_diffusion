@@ -132,13 +132,27 @@ def sweep_compare_magma(img_a, img_b, title="Sweep comparison"):
     plt.show()
 
 
-# Example usage
-df_30 = pickle.load(open('../data/test/COLI-194-AER-d200_ms2_30.pkl', 'rb'))
+# # Example usage
+# df_30 = pickle.load(open('../data/pred/COLI-54-ANA-d200_ms2_32.pkl', 'rb'))
+# img_30 = df_30[0][90:512, :]
+# zoom_factors = np.array((256, 512)) / np.array(img_30.shape)
+# img_30 = zoom(img_30, zoom_factors, order=1)  # linear interpolation
+# pred_30 = pickle.load(open('../data/pred/COLI-54-ANA-d200_ms2_32_99.pkl', 'rb'))[0, :, :]
+#
+# #epoch 99
+# sweep_compare_magma(img_30, pred_30)
+
+df_30 = pickle.load(open('../data/pred/COLI-54-ANA-d200_ms2_32.pkl', 'rb'))
 img_30 = df_30[0][90:512, :]
+img_30 = img_30-1
+cond_30 = np.log(df_30[1][90:512, :]+1)
 zoom_factors = np.array((256, 512)) / np.array(img_30.shape)
 img_30 = zoom(img_30, zoom_factors, order=1)  # linear interpolation
-pred_30 = pickle.load(open('../data/pred/COLI-194-AER-d200_ms2_30_3999.pkl', 'rb'))[0, 0, :, :]
+cond_30 = zoom(cond_30, zoom_factors, order=1)
+pred_30 = pickle.load(open('../data/pred/COLI-54-ANA-d200_ms2_32_299.pkl', 'rb'))[0, :, :]
 
+#epoch 299
+sweep_compare_magma(cond_30, pred_30)
 sweep_compare_magma(img_30, pred_30)
 
 # histo_analysis()
