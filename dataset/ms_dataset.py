@@ -59,6 +59,7 @@ class ms_dataset(DatasetFolder):
     def __getitem__(self, index: int):
 
         path = self.instances[index]
+        print(path)
         window = int(path.split('_')[-1].split('.')[0])
         sample = self.loader(path)
         image = sample[0]

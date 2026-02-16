@@ -1,3 +1,4 @@
+import datetime
 import os
 import pickle
 from typing import Dict
@@ -5,21 +6,17 @@ import wandb
 import torch
 import torch.optim as optim
 from torch.distributed import init_process_group, destroy_process_group
-from torchvision.datasets.samplers import DistributedSampler
+from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 
 import Diffusion
-from Diffusion.diffusion_ms import GaussianDiffusionTrainer_ms, GaussianDiffusionSampler_ms
-from Diffusion.diffusion_ms_dyn import GaussianDiffusionSampler_ms, GaussianDiffusionTrainer_ms
 from dataset.ms_dataset import ms_dataset
 from scheduler import GradualWarmupScheduler
 
 
 def train_ms(modelConfig: Dict):
-
-
     import multiprocessing as mp
     mp.set_start_method("spawn", force=True)
 
@@ -36,20 +33,22 @@ def train_ms(modelConfig: Dict):
     os.environ["MASTER_ADDR"] = master_addr
     os.environ["MASTER_PORT"] = "29500"
 
+    init_process_group(
+        backend="nccl",
+        timeout=datetime.timedelta(seconds=3600)  # Extend from 10 to 60 minutes
+    )
 
-
-    init_process_group(backend='nccl')
     torch.cuda.set_device(local_rank)
     device = torch.device(f"cuda:{local_rank}")
     #train data
     dataset_train = ms_dataset(root=modelConfig["dataset_train"],im_size=modelConfig["im_size"],window=modelConfig["dataset_window"])
-    sampler_train=DistributedSampler(dataset_train,shuffle=True)
+    sampler_train=DistributedSampler(dataset_train,shuffle=True,drop_last=True)
     dataloader_train = DataLoader(
         dataset_train, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=3, drop_last=True, pin_memory=True,sampler=sampler_train)
 
     #test data
     dataset_test = ms_dataset(root=modelConfig["dataset_test"],im_size=modelConfig["im_size"],window=modelConfig["dataset_window"])
-    sampler_test = DistributedSampler(dataset_test, shuffle=False)
+    sampler_test = DistributedSampler(dataset_test, shuffle=False, drop_last=True)
     sampler_test.set_epoch(0)
     dataloader_test = DataLoader(
         dataset_test, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=3, drop_last=True,
@@ -160,7 +159,6 @@ def train_ms(modelConfig: Dict):
                 })
         if rank == 0:
             run.log({"epoch":e,"loss": total_loss/i,"LR": lr})
-        torch.distributed.barrier()
         warmUpScheduler.step()
 
         if rank == 0:
