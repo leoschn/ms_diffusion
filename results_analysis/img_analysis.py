@@ -5,7 +5,7 @@ from scipy.ndimage import zoom
 
 ##FFT analysis
 def fft_analysis():
-    img_pred = pickle.load(open('../data/pred/RAOORN-11-ANA_100vW_100SPD_ms2_30_3999.pkl', 'rb'))
+    img_pred = pickle.load(open('../data/pred/aligned error/RAOORN-11-ANA_100vW_100SPD_ms2_30_3999.pkl', 'rb'))
     img_pred = img_pred[0,0,:,:]
     f_pred = np.fft.fft2(img_pred)
     fshift_pred = np.fft.fftshift(f_pred)
@@ -33,7 +33,7 @@ def fft_analysis():
 def histo_analysis():
     df_30 = pickle.load(open('../data/test/COLI-194-AER-d200_ms2_30.pkl', 'rb'))
 
-    pred_30 = pickle.load(open('../data/pred/COLI-194-AER-d200_ms2_30_3999.pkl','rb'))[0,0,:,:]
+    pred_30 = pickle.load(open('../data/pred/aligned error/COLI-194-AER-d200_ms2_30_3999.pkl', 'rb'))[0,0, :, :]
 
 
     # train dataset transform
@@ -61,7 +61,7 @@ def histo_analysis():
 def visual_analysis():
     df_30 = pickle.load(open('../data/test/COLI-194-AER-d200_ms2_30.pkl', 'rb'))
 
-    pred_30 = pickle.load(open('../data/pred/COLI-194-AER-d200_ms2_30_3999.pkl','rb'))[0,0,:,:]
+    pred_30 = pickle.load(open('../data/pred/aligned error/COLI-194-AER-d200_ms2_30_3999.pkl', 'rb'))[0,0, :, :]
 
 
     # train dataset transform
@@ -142,14 +142,14 @@ def sweep_compare_magma(img_a, img_b, title="Sweep comparison"):
 # #epoch 99
 # sweep_compare_magma(img_30, pred_30)
 
-df_30 = pickle.load(open('../data/pred/COLI-54-ANA-d200_ms2_32.pkl', 'rb'))
+df_30 = pickle.load(open('../data/pred/COLI-99-AER-d200_ms2_32.pkl', 'rb'))
 img_30 = df_30[0][90:512, :]
 img_30 = img_30-1
 cond_30 = np.log(df_30[1][90:512, :]+1)
 zoom_factors = np.array((256, 512)) / np.array(img_30.shape)
 img_30 = zoom(img_30, zoom_factors, order=1)  # linear interpolation
 cond_30 = zoom(cond_30, zoom_factors, order=1)
-pred_30 = pickle.load(open('../data/pred/COLI-54-ANA-d200_ms2_32_299.pkl', 'rb'))[0, :, :]
+pred_30 = pickle.load(open('../data/pred/COLI-99-AER-d200_ms2_32_399.pkl', 'rb'))[0, :, :]
 
 #epoch 299
 sweep_compare_magma(cond_30, pred_30)

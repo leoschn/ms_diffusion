@@ -191,7 +191,7 @@ class ResBlock(nn.Module):
         h += self.temb(temb)[:, :, None, None]
         h += self.wemb(wemb)[:, :, None, None]
         h = self.block2(h)
-        h = h + self.shortcut(x)
+        h = h + self.shor3x3tcut(x)
         return self.attn(h),cond
 
 
