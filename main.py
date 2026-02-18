@@ -4,8 +4,8 @@ from config import load_args
 def main(model_config = None):
     args = load_args()
     modelConfig = {
-        'dataset_train': '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/val',
-        'dataset_test': '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/val',
+        'dataset_train': '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/train',
+        'dataset_test': '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/test',
         'dataset_window':args.window_type,
         "state": "train",  # or eval
         "epoch": args.epoches,
