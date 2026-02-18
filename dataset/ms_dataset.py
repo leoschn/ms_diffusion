@@ -45,7 +45,7 @@ class ms_dataset(DatasetFolder):
                                              transforms.ToTensor(),
                                              transforms.Resize(im_size),
                                              #transforms.Normalize((1.0207), (1.0011)), #std 1 mean 0 but lies in roughly [-1 5] => outside pred range
-                                             # transforms.Normalize((),(3.)), #=> fixes the range even if nor more std 1 mean 0
+                                             transforms.Normalize((3.04),(3.04)), #=> fixes the range even if nor more std 1 mean 0
         ])
 
         # self.transform_cond = None

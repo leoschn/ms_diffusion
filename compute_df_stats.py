@@ -51,3 +51,8 @@ print("Mean:", mean)
 print("Std:", std)
 print("Max int:", max_int)
 print("Min int:", min_int)
+# train set :
+# Mean: tensor([1.0207])
+# Std: tensor([1.0011])
+# Max int: tensor(6.0848)
+# Min int: tensor(0.)
