@@ -36,6 +36,7 @@ def main(model_config = None):
         "model":args.model,
         "schema":args.schema,
         "thresholding":args.thresholding,
+        "num_threshold":args.num_threshold,
     }
     if model_config is not None:
         modelConfig = model_config

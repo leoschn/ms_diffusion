@@ -116,7 +116,7 @@ def train_ms(modelConfig: Dict):
             net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
 
         sampler = Diffusion.diffusion_ms_dyn.GaussianDiffusionSampler_ms(
-            net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
+            net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"],modelConfig["num_threshold"]).to(device)
     # Sampled from standard normal distribution
     mse_loss_fct = torch.nn.MSELoss()
 

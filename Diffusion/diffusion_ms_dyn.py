@@ -46,12 +46,12 @@ class GaussianDiffusionTrainer_ms(nn.Module):
 
 
 class GaussianDiffusionSampler_ms(nn.Module):
-    def __init__(self, model, beta_1, beta_T, T):
+    def __init__(self, model, beta_1, beta_T, T, num_threshold):
         super().__init__()
         eps = 1e-20
         self.model = model
         self.T = T
-
+        self.percentile = num_threshold
         # schedules
         self.register_buffer('betas', torch.linspace(beta_1, beta_T, T).double())
         alphas = 1. - self.betas
@@ -90,11 +90,11 @@ class GaussianDiffusionSampler_ms(nn.Module):
     # ----------------------------------------------------
     # Imagen-style dynamic thresholding
     # ----------------------------------------------------
-    def dynamic_thresholding(self, x0, percentile=0.995):
+    def dynamic_thresholding(self, x0):
         B = x0.shape[0]
         x0_flat = x0.view(B, -1)
 
-        s = torch.quantile(x0_flat.abs(), percentile, dim=1)
+        s = torch.quantile(x0_flat.abs(), self.percentile, dim=1)
         s = torch.maximum(s, torch.ones_like(s))  # enforce s >= 1
         s = s.view(B, *([1] * (x0.dim() - 1))) #(B,C,H,W) => (B,1,1,1)
 
