@@ -17,7 +17,7 @@ def main(model_config = None):
         "im_size": (256,512),
         "channel": 64,
         "channel_mult": [1, 2, 3, 4],
-        "attn": [args.attn] if args.attn < 4 else [],
+        "attn": args.attn,
         "num_res_blocks": 2,
         "dropout": 0.15,
         "lr": 1e-4,
