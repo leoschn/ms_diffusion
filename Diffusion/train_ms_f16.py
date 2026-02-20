@@ -61,7 +61,7 @@ def train_ms(modelConfig: Dict):
                          attn=modelConfig["attn"],
                          num_res_blocks=modelConfig["num_res_blocks"], dropout=modelConfig["dropout"],
                          window_embedding=modelConfig["window_embd"], n_window=modelConfig["n_window"]).to(device)
-    elif modelConfig["model"]=='v2':
+    elif modelConfig["model"]=='add':
         net_model = Diffusion.model_ms_v2.UNet(T=modelConfig["T"], ch=modelConfig["channel"],
                                             ch_mult=modelConfig["channel_mult"],
                                             attn=modelConfig["attn"],
@@ -69,8 +69,16 @@ def train_ms(modelConfig: Dict):
                                             dropout=modelConfig["dropout"],
                                             window_embedding=modelConfig["window_embd"],
                                             n_window=modelConfig["n_window"]).to(device)
+    elif modelConfig["model"]=='concat':
+        net_model = Diffusion.model_ms_concat.UNet(T=modelConfig["T"], ch=modelConfig["channel"],
+                                            ch_mult=modelConfig["channel_mult"],
+                                            attn=modelConfig["attn"],
+                                            num_res_blocks=modelConfig["num_res_blocks"],
+                                            dropout=modelConfig["dropout"],
+                                            window_embedding=modelConfig["window_embd"],
+                                            n_window=modelConfig["n_window"]).to(device)
     else:
-        raise 'model not found'
+        raise 'model type not found'
     net_model.apply(lambda m: setattr(m, 'weight', m.weight.contiguous())
     if hasattr(m, 'weight') else None)
     net_model = torch.nn.parallel.DistributedDataParallel(net_model,device_ids=[local_rank],

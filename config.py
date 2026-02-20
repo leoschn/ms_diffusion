@@ -16,7 +16,7 @@ def load_args():
     parser.add_argument('--save_dir', type=str, default='./SampledImgs_2/')
     parser.add_argument('--attn', type=int, default=4)
     parser.add_argument('--amp', type=str, default='f16')
-    parser.add_argument('--model', type=str, default='v2')
+    parser.add_argument('--model', type=str, default='add')
     parser.add_argument('--schema', type=str, default='FSDP2')
     parser.add_argument('--checkpoint', type=str, default='./Checkpoints/temp')
     parser.add_argument('--thresholding', type=str, default='fix')
