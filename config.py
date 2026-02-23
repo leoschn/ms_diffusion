@@ -15,7 +15,6 @@ def load_args():
     parser.add_argument('--window_embd', type=str, default='categorical')
     parser.add_argument('--save_dir', type=str, default='./SampledImgs_2/')
     parser.add_argument('--attn', nargs='+', help='<Required> Set flag', required=False, type=int, default=[])
-    parser.add_argument('--attn', type=int, default=4)
     parser.add_argument('--amp', type=str, default='f16')
     parser.add_argument('--model', type=str, default='add')
     parser.add_argument('--schema', type=str, default='FSDP2')
