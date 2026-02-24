@@ -210,6 +210,7 @@ class UNet(nn.Module):
         for i, mult in enumerate(ch_mult):
             out_ch = ch * mult
             for _ in range(num_res_blocks):
+                print(now_ch,out_ch)
                 self.down.append(
                     ResBlock(now_ch, out_ch, tdim, dropout, attn=(i in attn))
                 )
