@@ -201,8 +201,8 @@ class UNet(nn.Module):
         else:
             self.window_embedding = ZeroLinear(ch)
 
-        self.in_head = nn.Conv2d(1, ch, 3, 1, 1)
-        self.cond_head = nn.Conv2d(1, 1, 3, 1, 1)
+        self.in_head = nn.Conv2d(1, ch, 3, 1, 1) #63 ch
+        self.cond_head = nn.Conv2d(1, 1, 3, 1, 1)#1 ch => 64 in total
         self.down = nn.ModuleList()
         chs = [ch+1] #add 1 channel for cond concatenation
         now_ch = ch+1 #same
