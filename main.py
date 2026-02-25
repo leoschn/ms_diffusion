@@ -15,7 +15,7 @@ def main(model_config = None):
         "window_embd":args.window_embd,
         "T": 1000,
         "im_size": (256,512),
-        "channel": 64,
+        "channel": 64 if args.model =='add' else 63,
         "channel_mult": [1, 2, 3, 4],
         "attn": args.attn,
         "num_res_blocks": 2,

@@ -32,28 +32,31 @@ def fft_analysis():
 
 ###intesity histogram
 
-def histo_analysis():
-    df_30 = pickle.load(open('../data/test/COLI-194-AER-d200_ms2_30.pkl', 'rb'))
-
-    pred_30 = pickle.load(open('../data/pred/aligned error/COLI-194-AER-d200_ms2_30_3999.pkl', 'rb'))[0,0, :, :]
-
-
+def histo_analysis(pred_path):
+    pred = pickle.load(open(pred_path, 'rb'))[0, :, :]
+    f_name = os.path.basename(pred_path)
+    base, ext = f_name.rsplit(".", 1)  # Split off extension
+    base = base.rsplit("_", 1)[0]  # Remove last underscore part
+    base_path = f"{base}.{ext}"
+    df_path = os.path.join('../data/test_set_single_32/', base_path)
+    df = pickle.load(open(df_path, 'rb'))
     # train dataset transform
-    img_30 = df_30[0][90:512,:]
-    zoom_factors = np.array((256,512)) / np.array(img_30.shape)
-    img_30 = zoom(img_30, zoom_factors, order=1)  # linear interpolation
-
-    cond_30 = np.log(df_30[1][90:512,:]+1)
-    img = cond_30
-    hist, bins = np.histogram(img.flatten(), bins=256, range=[np.min(img), np.max(img)])
+    img = (df[0][90:512,:]-3.04)/3.04
+    zoom_factors = np.array((256,512)) / np.array(img.shape)
+    img = zoom(img, zoom_factors, order=1)  # linear interpolation
+    hist_img, bins_img = np.histogram(img.flatten(), bins=100, range=[-1,1])
+    hist_pred, bins_pred = np.histogram(pred.flatten(), bins=100, range=[-1,1])
 
     # Plot histogram
     plt.figure(figsize=(10, 6))
-    plt.plot(bins[:-1], hist, color='black')
+    plt.plot( bins_img[:-1], hist_img, color='black')
+    plt.plot( bins_pred[:-1], hist_pred,color='blue')
+
+    plt.legend(['truth','pred'])
     plt.title('Intensity Histogram')
     plt.xlabel('Pixel Intensity')
     plt.ylabel('Number of Pixels')
-    plt.xlim([np.min(img), np.max(img)])
+    plt.xlim([-1, 1])
     plt.grid(True)
     plt.show()
 
@@ -174,6 +177,6 @@ def vizualize_res(pred_path):
 # #epoch 299
 # sweep_compare_magma(cond_30, pred_30)
 # sweep_compare_magma(img_30, pred_30)
-vizualize_res('../data/pred/sampled_single_dyn_add_normalize/KLEAER-4-ANA-d200_ms2_32_399.pkl')
-
+# vizualize_res('../data/pred/sampled_threshold_095/KLEAER-4-ANA-d200_ms2_32_899.pkl')
+histo_analysis('../data/pred/sampled_threshold_0999/KLEAER-4-ANA-d200_ms2_32_499.pkl')
 # histo_analysis()
