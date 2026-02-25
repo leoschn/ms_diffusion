@@ -9,6 +9,7 @@ def load_args():
     parser.add_argument('--save_inter', type=int, default=50)
     parser.add_argument('--eval_inter', type=int, default=1)
     parser.add_argument('--n_window', type=int, default=164)
+    parser.add_argument('--loss', type=str, default='l2')
     parser.add_argument('--window_type', type=str, default='all')
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=8)

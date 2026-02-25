@@ -13,10 +13,16 @@ def extract(v, t, x_shape):
     return out.view([t.shape[0]] + [1] * (len(x_shape) - 1))
 
 class GaussianDiffusionTrainer_ms(nn.Module):
-    def __init__(self, model, beta_1, beta_T, T):
+    def __init__(self, model, beta_1, beta_T, T, loss):
         super().__init__()
         eps = 1e-20
         self.model = model
+        if loss == 'l2':
+            self.loss = nn.MSELoss()
+        elif loss == 'l1':
+            self.loss = nn.L1Loss()
+        else:
+            raise NotImplementedError
         self.T = T
 
         self.register_buffer(

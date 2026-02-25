@@ -18,6 +18,7 @@ def main(model_config = None):
         "channel": 64 if args.model =='add' else 63,
         "channel_mult": [1, 2, 3, 4],
         "attn": args.attn,
+        "loss":args.loss,
         "num_res_blocks": 2,
         "dropout": 0.15,
         "lr": 1e-4,
