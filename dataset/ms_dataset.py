@@ -34,9 +34,10 @@ def pkl_loader(path):
     return sample
 
 class ms_dataset(DatasetFolder):
-    def __init__(self, root, im_size=(512,1024), window = 'all'):
+    def __init__(self, root, im_size=(512,1024), window = 'all',total_windows = 100):
         self.root = root
         self.window = str(window)
+        self.total_windows = total_windows
         self.instances = self.make_dataset('.pkl')
         self.loader = pkl_loader
         # self.transform_img = None
@@ -72,7 +73,7 @@ class ms_dataset(DatasetFolder):
             cond = self.transform_cond(cond)
 
 
-        return image, cond, path, window
+        return image, cond, path, window/self.total_windows
 
     def __len__(self):
         return len(self.instances)
@@ -84,7 +85,7 @@ class ms_dataset(DatasetFolder):
             if file_name.endswith(valid_ext):
                 if self.window =='all':
                     instances.append(file_name)
-                elif 'ms2_'+self.window in file_name:
+                elif 'ms2_'+self.window+'.pkl' in file_name:
                     instances.append(file_name)
 
         return instances
