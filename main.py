@@ -9,7 +9,7 @@ def main(model_config = None):
         'dataset_window':args.window_type,
         "state": "train",  # or eval
         "epoch": args.epoches,
-        "warmup_epoches": args.warmup_epoches,
+        "warmup_epoches": max(args.warmup_epoches,args.epoches//10),
         "batch_size": args.batch_size,
         "n_window":args.n_window,
         "window_embd":args.window_embd,
