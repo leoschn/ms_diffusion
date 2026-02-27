@@ -177,6 +177,5 @@ def vizualize_res(pred_path):
 # #epoch 299
 # sweep_compare_magma(cond_30, pred_30)
 # sweep_compare_magma(img_30, pred_30)
-# vizualize_res('../data/pred/sampled_threshold_095/KLEAER-4-ANA-d200_ms2_32_899.pkl')
-histo_analysis('../data/pred/sampled_threshold_0999/KLEAER-4-ANA-d200_ms2_32_499.pkl')
-# histo_analysis()
+vizualize_res('../data/pred/sampled_threshold_095/KLEAER-4-ANA-d200_ms2_32_499.pkl')
+# histo_analysis('../data/pred/sampled_threshold_0999/KLEAER-4-ANA-d200_ms2_32_499.pkl')

@@ -99,7 +99,7 @@ class UpSample(nn.Module):
 
     def forward(self, x, *_):
         x = F.interpolate(x, scale_factor=2, mode="nearest")
-        return self.conv(x),None
+        return self.conv(x)
 
 
 class AttnBlock(nn.Module):
