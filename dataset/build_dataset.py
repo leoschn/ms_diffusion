@@ -378,10 +378,9 @@ def main():
 
         # if not os.path.exists(f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl'):
         sample_name = os.path.basename(f_name).split('.pkl')[0]
-        try :
-            extract_detected_features_zeno_gaussian(out_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl',
-                                                    img_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{sample_name}.pkl',
-                                                    diann_report=f'/lustre/fsn1/projects/rech/bun/ucg81ws/output/report_{sample_name}.tsv')
+        extract_detected_features_zeno_gaussian(out_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{sample_name}.pkl',
+                                                img_path=f'/lustre/fsn1/projects/rech/bun/ucg81ws/image/{sample_name}.pkl',
+                                                diann_report=f'/lustre/fsn1/projects/rech/bun/ucg81ws/output/report_{sample_name}.tsv')
 
         if os.path.exists('/lustre/fsn1/projects/rech/bun/ucg81ws/conditioning/conditioning_{}.pkl'.format(sample_name)):
             i+=1
