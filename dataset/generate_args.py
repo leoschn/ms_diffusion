@@ -1,7 +1,7 @@
 import glob
 import os
 
-sample_list = glob.glob('/lustre/fsn1/projects/rech/bun/ucg81ws/mzml/**.mzML', recursive=True)
+sample_list = glob.glob('/lustre/fsn1/projects/rech/bun/ucg81ws/all_data_mzml/**.mzML', recursive=True)
 i=0
 for sample in sample_list:
     f_name = os.path.basename(sample).split('.mzML')[0]
