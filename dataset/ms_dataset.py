@@ -73,7 +73,7 @@ class ms_dataset(DatasetFolder):
             cond = self.transform_cond(cond)
 
 
-        return image, cond, path, window/self.total_windows
+        return image, cond, path, window
 
     def __len__(self):
         return len(self.instances)
