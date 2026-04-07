@@ -131,9 +131,8 @@ class GaussianDiffusionSampler_ms(nn.Module):
     def forward(self, x_T, cond, wind):
         x_t = x_T
 
-        # 🔥 NEW: reduced timestep schedule
         times = torch.linspace(0, self.T - 1, self.ddim_steps).long().flip(0)
-
+        #timesteps = (np.linspace(0, np.sqrt(T), steps) ** 2).astype(int) (quadratic time step) or cosine time step ??
         for i in range(len(times) - 1):
             t = x_t.new_full((x_t.shape[0],), times[i], dtype=torch.long)
             t_prev = x_t.new_full((x_t.shape[0],), times[i + 1], dtype=torch.long)
