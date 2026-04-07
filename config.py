@@ -16,12 +16,13 @@ def load_args():
     parser.add_argument('--window_embd', type=str, default='categorical')
     parser.add_argument('--save_dir', type=str, default='./SampledImgs_2/')
     parser.add_argument('--attn', nargs='+', help='<Required> Set flag', required=False, type=int, default=[])
-    parser.add_argument('--amp', type=str, default='f16')
     parser.add_argument('--model', type=str, default='add')
-    parser.add_argument('--schema', type=str, default='FSDP2')
     parser.add_argument('--checkpoint', type=str, default='./Checkpoints/temp')
     parser.add_argument('--thresholding', type=str, default='fix')
     parser.add_argument('--num_threshold', type=float, default=0.995)
+    parser.add_argument('--eta', type=float, default=0.)
+    parser.add_argument('--ddim_step', type=int, default=50)
+    parser.add_argument('--type', type=str, default='ddim')
     args = parser.parse_args()
 
     return args

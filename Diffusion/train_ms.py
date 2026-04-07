@@ -116,15 +116,21 @@ def train_ms(modelConfig: Dict):
     if modelConfig['thresholding']=='fix':
         trainer = Diffusion.diffusion_ms.GaussianDiffusionTrainer_ms(
             net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
-
         sampler = Diffusion.diffusion_ms.GaussianDiffusionSampler_ms(
             net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
+
     elif modelConfig['thresholding']=='dyn':
         trainer = Diffusion.diffusion_ms_dyn.GaussianDiffusionTrainer_ms(
             net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"],modelConfig["loss"]).to(device)
-
         sampler = Diffusion.diffusion_ms_dyn.GaussianDiffusionSampler_ms(
-            net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"],modelConfig["num_threshold"]).to(device)
+            net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"]).to(device)
+
+    elif modelConfig['type']=='ddim':
+        trainer = Diffusion.diffusion_DDIM.GaussianDiffusionTrainer_ms(
+            net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"], modelConfig["loss"]).to(device)
+        sampler = Diffusion.diffusion_DDIM.GaussianDiffusionSampler_ms(
+            net_model, modelConfig["beta_1"], modelConfig["beta_T"], modelConfig["T"],modelConfig["num_threshold"],
+            eta=modelConfig["eta"],ddim_steps=modelConfig["ddim_steps"]).to(device)
     # Sampled from standard normal distribution
     mse_loss_fct = torch.nn.MSELoss()
 

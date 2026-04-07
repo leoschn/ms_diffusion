@@ -1,4 +1,4 @@
-from Diffusion import train_ms_bf16, train_ms_f16, train_ms_f16_FSDP2
+from Diffusion import train_ms
 from config import load_args
 
 def main(model_config = None):
@@ -38,17 +38,14 @@ def main(model_config = None):
         "schema":args.schema,
         "thresholding":args.thresholding,
         "num_threshold":args.num_threshold,
+        "eta":args.eta,
+        "ddim_step":args.ddim_step,
+        "type":args.type,
     }
     if model_config is not None:
         modelConfig = model_config
 
-    if modelConfig["amp"]=='f16':
-        if modelConfig["schema"] == 'DDP':
-            train_ms_f16.train_ms(modelConfig)
-        elif modelConfig["schema"] == 'FSDP2':
-            train_ms_f16_FSDP2.train_ms(modelConfig)
-    else :
-        train_ms_bf16.train_ms(modelConfig)
+    train_ms(modelConfig)
 
     # eval_ms(modelConfig)
 
