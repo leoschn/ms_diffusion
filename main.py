@@ -35,7 +35,6 @@ def main(model_config = None):
         "inter_eval":args.eval_inter,
         "amp":args.amp,
         "model":args.model,
-        "schema":args.schema,
         "thresholding":args.thresholding,
         "num_threshold":args.num_threshold,
         "eta":args.eta,
