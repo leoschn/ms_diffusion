@@ -33,7 +33,6 @@ def main(model_config = None):
         "sampledImgName": "sampled_ms_image",
         "nrow": 8,
         "inter_eval":args.eval_inter,
-        "amp":args.amp,
         "model":args.model,
         "thresholding":args.thresholding,
         "num_threshold":args.num_threshold,
