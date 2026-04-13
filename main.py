@@ -37,7 +37,7 @@ def main(model_config = None):
         "thresholding":args.thresholding,
         "num_threshold":args.num_threshold,
         "eta":args.eta,
-        "ddim_steps":args.ddim_step,
+        "ddim_steps":args.ddim_steps,
         "type":args.type,
     }
     if model_config is not None:
