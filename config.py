@@ -21,7 +21,7 @@ def load_args():
     parser.add_argument('--thresholding', type=str, default='fix')
     parser.add_argument('--num_threshold', type=float, default=0.995)
     parser.add_argument('--eta', type=float, default=0.)
-    parser.add_argument('--ddim_step', type=int, default=50)
+    parser.add_argument('--ddim_steps', type=int, default=50)
     parser.add_argument('--type', type=str, default='ddim')
     args = parser.parse_args()
 
