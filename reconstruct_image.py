@@ -50,5 +50,5 @@ if __name__ == '__main__':
     common_meta_data = pickle.load(open(DUMMY_IMAGE_PATH, 'rb'))['metadata']
     final_size = pickle.load(open(DUMMY_IMAGE_PATH, 'rb'))['image'][0].shape
     for name in base_name_list:
-        reconstruct_image(name + 'WIND_INDEX_9.pkl', meta_data=common_meta_data, base_size=final_size,
+        reconstruct_image(name + '_WIND_INDEX_9.pkl', meta_data=common_meta_data, base_size=final_size,
                           out_dir='/lustre/fswork/projects/rech/bun/ucg81ws/these/ms_diffusion/sampled_full_reconstructed')
