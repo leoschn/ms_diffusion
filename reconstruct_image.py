@@ -1,10 +1,9 @@
 import glob
 import pickle
 import os
-import numpy as np
-import cv2
 
 def reconstruct_image(base_name ,meta_data,out_dir=None):
+    #unpickle all 100 windows and concatenate it in a single .pkl file for latter use.
     if not(os.path.exists(out_dir)):
         os.mkdir(out_dir)
     list_img = []
