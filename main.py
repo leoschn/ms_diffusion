@@ -4,10 +4,10 @@ from config import load_args
 def main(model_config = None):
     args = load_args()
     modelConfig = {
-        'dataset_train': '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/train',
-        'dataset_test': '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/test',
+        'dataset_train':args.dataset_train,
+        'dataset_val':args.dataset_val,
+        'dataset_test': args.dataset_test,
         'dataset_window':args.window_type,
-        "state": "train",  # or eval
         "epoch": args.epoches,
         "warmup_epoches": max(args.warmup_epoches,args.epoches//10),
         "batch_size": args.batch_size,
@@ -28,7 +28,8 @@ def main(model_config = None):
         "grad_clip": 1.,
         "training_load_weight": None,
         "save_weight_dir": args.checkpoint,
-        "sampled_dir": args.save_dir,
+        "sampled_dir_val": args.save_dir_val,
+        "sampled_dir_test": args.save_dir_test,
         "sampledNoisyImgName": "NoisyNoGuidenceImgs",
         "sampledImgName": "sampled_ms_image",
         "nrow": 8,

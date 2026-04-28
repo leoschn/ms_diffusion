@@ -3,6 +3,9 @@ import argparse
 
 def load_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset_train, type', type=str, default= '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/train')
+    parser.add_argument('--dataset_val, type', type=str, default= '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/val')
+    parser.add_argument('--dataset_test, type', type=str, default= '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/test')
 
     parser.add_argument('--epoches', type=int, default=10)
     parser.add_argument('--warmup_epoches', type=int, default=1)
@@ -14,7 +17,8 @@ def load_args():
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--window_embd', type=str, default='categorical')
-    parser.add_argument('--save_dir', type=str, default='./SampledImgs_2/')
+    parser.add_argument('--save_dir_val', type=str, default='./SampledImgs_2/')
+    parser.add_argument('--save_dir_test', type=str, default='./SampledImgs_2/')
     parser.add_argument('--attn', nargs='+', help='<Required> Set flag', required=False, type=int, default=[])
     parser.add_argument('--model', type=str, default='add')
     parser.add_argument('--checkpoint', type=str, default='./Checkpoints/temp')
