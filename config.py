@@ -3,9 +3,9 @@ import argparse
 
 def load_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset_train', type, type=str, default= '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/train')
-    parser.add_argument('--dataset_val', type, type=str, default= '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/val')
-    parser.add_argument('--dataset_test', type, type=str, default= '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/test')
+    parser.add_argument('--dataset_train', type=str, default= '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/train')
+    parser.add_argument('--dataset_val', type=str, default= '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/val')
+    parser.add_argument('--dataset_test', type=str, default= '/lustre/fsn1/projects/rech/bun/ucg81ws/dataset/test')
     parser.add_argument('--epoches', type=int, default=10)
     parser.add_argument('--warmup_epoches', type=int, default=1)
     parser.add_argument('--save_inter', type=int, default=50)
