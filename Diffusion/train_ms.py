@@ -281,6 +281,17 @@ def train_ms(modelConfig: Dict):
             torch.distributed.barrier()
 
     #apply best model on test set
+
+    ckpt = torch.load(
+        os.path.join(
+            modelConfig["save_weight_dir"],
+            f'ckpt_{best_epoch}_.pt'
+        ),
+        map_location=device
+    )
+
+    net_model.module.load_state_dict(ckpt)
+
     net_model.load_state_dict(torch.load(os.path.join(
                 modelConfig["save_weight_dir"], 'ckpt_' + str(best_epoch) + "_.pt")))
     net_model.eval()
@@ -344,11 +355,14 @@ def train_ms(modelConfig: Dict):
         torch.distributed.all_reduce(total_mse_tensor, op=torch.distributed.ReduceOp.SUM)
         torch.distributed.all_reduce(total_psnr_tensor, op=torch.distributed.ReduceOp.SUM)
         torch.distributed.all_reduce(total_count_tensor, op=torch.distributed.ReduceOp.SUM)
+
         mean_mse = total_mse_tensor / total_count_tensor
+        mean_psnr = total_psnr_tensor / total_count_tensor
+
         if rank == 0:
-            print(f"[Test] epoch {e} | mse: {mean_mse.item():.6f} | psnr: {mean_psnr.item():.4f}")
+            print(f"[Test] epoch {best_epoch} | mse: {mean_mse.item():.6f} | psnr: {mean_psnr.item():.4f}")
             run.log({
-                "epoch_test": e,
+                "epoch_test": best_epoch,
                 "loss_test": mean_mse.item(),
                 "psnr_test": mean_psnr.item(),
             })
