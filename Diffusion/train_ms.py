@@ -292,8 +292,6 @@ def train_ms(modelConfig: Dict):
 
     net_model.module.load_state_dict(ckpt)
 
-    net_model.load_state_dict(torch.load(os.path.join(
-                modelConfig["save_weight_dir"], 'ckpt_' + str(best_epoch) + "_.pt")))
     net_model.eval()
     sampler_test.set_epoch(best_epoch)
 
