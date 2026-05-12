@@ -148,7 +148,7 @@ def train_ms(modelConfig: Dict):
         raise NotImplementedError
 
     # Sampled from standard normal distribution
-    mse_loss_fct = torch.nn.MSELoss(reduction='none')
+    mse_loss_fct = torch.nn.MSELoss()
 
     # start training
     best_epoch = 0
@@ -230,7 +230,7 @@ def train_ms(modelConfig: Dict):
                     wind = wind.int().to(device, non_blocking=True)
                     noisyImage = torch.randn_like(images[:, :1, :, :])
                     sampledImgs = sampler(noisyImage, cond, wind)
-                    mse_loss = mse_loss_fct(sampledImgs, images).mean()
+                    mse_loss = mse_loss_fct(sampledImgs, images)
                     psnr_loss = 10 * torch.log10(1 / mse_loss)
 
 
@@ -331,7 +331,7 @@ def train_ms(modelConfig: Dict):
             wind = wind.int().to(device, non_blocking=True)
             noisyImage = torch.randn_like(images[:, :1, :, :])
             sampledImgs = sampler(noisyImage, cond, wind)
-            mse_loss = mse_loss_fct(sampledImgs, images).mean()
+            mse_loss = mse_loss_fct(sampledImgs, images)
             psnr_loss = 10 * torch.log10(1 / mse_loss)
 
             total_mse += mse_loss.item() * batch_size
