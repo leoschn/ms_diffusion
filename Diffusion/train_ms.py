@@ -148,7 +148,7 @@ def train_ms(modelConfig: Dict):
         raise NotImplementedError
 
     # Sampled from standard normal distribution
-    mse_loss_fct = torch.nn.MSELoss(reduction='None')
+    mse_loss_fct = torch.nn.MSELoss(reduction='none')
 
     # start training
     best_epoch = 0
