@@ -164,12 +164,13 @@ def train_ms(modelConfig: Dict):
             pbar = dataloader_train
         for images, cond, _, wind in pbar:
             # train
-            batch_size = images.size(0)
+            batch_size = images.size(0) * world_size
             n_image += batch_size
             optimizer.zero_grad(set_to_none=True)
 
             cond = cond.to(device, non_blocking=True)
             x_0 = images.to(device, non_blocking=True)
+            print(x_0.min(), x_0.max(), x_0.mean(), x_0.std())
             wind = wind.to(device, non_blocking=True)
 
             loss = trainer(x_0, cond, wind).mean()
@@ -223,7 +224,7 @@ def train_ms(modelConfig: Dict):
                 total_mse = 0
                 total_psnr = 0
                 for images, cond ,path ,wind in pbar_val:
-                    batch_size = images.size(0)
+                    batch_size = images.size(0) * world_size
                     n_image+=batch_size
                     cond = cond.to(device, non_blocking=True)
                     images = images.to(device, non_blocking=True)
@@ -231,7 +232,7 @@ def train_ms(modelConfig: Dict):
                     noisyImage = torch.randn_like(images[:, :1, :, :])
                     sampledImgs = sampler(noisyImage, cond, wind)
                     mse_loss = mse_loss_fct(sampledImgs, images)
-                    psnr_loss = 10 * torch.log10(1 / mse_loss)
+                    psnr_loss = 10 * torch.log10(4 / mse_loss) #image in [-1 1]
 
 
                     total_mse += mse_loss.item() *batch_size
