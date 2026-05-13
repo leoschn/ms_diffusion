@@ -170,7 +170,7 @@ def train_ms(modelConfig: Dict):
 
             cond = cond.to(device, non_blocking=True)
             x_0 = images.to(device, non_blocking=True)
-            print(x_0.min(), x_0.max(), x_0.mean(), x_0.std())
+            print('caond : ' ,cond.min(), cond.max(), cond.mean(), cond.std())
             wind = wind.to(device, non_blocking=True)
 
             loss = trainer(x_0, cond, wind).mean()
