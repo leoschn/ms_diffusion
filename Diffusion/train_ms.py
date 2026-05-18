@@ -170,7 +170,7 @@ def train_ms(modelConfig: Dict):
 
             cond = cond.to(device, non_blocking=True)
             x_0 = images.to(device, non_blocking=True)
-            print('caond : ' ,cond.min(), cond.max(), cond.mean(), cond.std())
+            print('cond : ' ,cond.min(), cond.max(), cond.mean(), cond.std())
             wind = wind.to(device, non_blocking=True)
 
             loss = trainer(x_0, cond, wind).mean()
@@ -195,7 +195,7 @@ def train_ms(modelConfig: Dict):
                 lr = warmUpScheduler.get_lr()[0]
                 pbar.set_postfix(ordered_dict={
                     "epoch": e,
-                    "loss: ": total_loss,
+                    "loss: ": total_loss/n_image,
                     "img shape: ": x_0.size(),
                     "LR": lr
                 })
