@@ -47,7 +47,7 @@ class GaussianDiffusionTrainer_ms(nn.Module):
             extract(self.sqrt_alphas_bar, t, x_0.shape) * x_0 +
             extract(self.sqrt_one_minus_alphas_bar, t, x_0.shape) * noise)
         pred = self.model(x_t, t, cond, wind)
-        print('pred : ',pred.mean(), pred.std(), pred.min(), pred.max())
+        # print('pred : ',pred.mean(), pred.std(), pred.min(), pred.max())
         loss = F.mse_loss(pred, noise, reduction='none')
         return loss
 

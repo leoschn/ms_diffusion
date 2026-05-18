@@ -170,7 +170,7 @@ def train_ms(modelConfig: Dict):
 
             cond = cond.to(device, non_blocking=True)
             x_0 = images.to(device, non_blocking=True)
-            print('cond : ' ,cond.min(), cond.max(), cond.mean(), cond.std())
+            # print('cond : ' ,cond.min(), cond.max(), cond.mean(), cond.std())
             wind = wind.to(device, non_blocking=True)
 
             loss = trainer(x_0, cond, wind).mean()
@@ -253,7 +253,7 @@ def train_ms(modelConfig: Dict):
 
                         sampled_cpu = sampledImgs.cpu()
 
-                        for i in range(batch_size):
+                        for i in range(images.size(0)):
                             fname = os.path.basename(path[i]).replace('.pkl', '')
 
                             # save pkl (single image)
@@ -338,31 +338,30 @@ def train_ms(modelConfig: Dict):
             total_mse += mse_loss.item() * batch_size
             total_psnr += psnr_loss.item() * batch_size
 
-            if rank == 0:
-                os.makedirs(modelConfig["sampled_dir_test"], exist_ok=True)
+            os.makedirs(modelConfig["sampled_dir_test"], exist_ok=True)
 
-                sampled_cpu = sampledImgs.cpu()
+            sampled_cpu = sampledImgs.cpu()
 
-                for i in range(batch_size):
-                    fname = os.path.basename(path[i]).replace('.pkl', '')
+            for i in range(images.size(0)):
+                fname = os.path.basename(path[i]).replace('.pkl', '')
 
-                    # save pkl (single image)
-                    arr = sampled_cpu[i].numpy()
-                    with open(
-                            os.path.join(modelConfig["sampled_dir_test"], f"{fname}_{e}.pkl"),
-                            'wb'
-                    ) as f:
-                        pickle.dump(arr, f)
+                # save pkl (single image)
+                arr = sampled_cpu[i].numpy()
+                with open(
+                        os.path.join(modelConfig["sampled_dir_test"], f"{fname}_{e}.pkl"),
+                        'wb'
+                ) as f:
+                    pickle.dump(arr, f)
 
-                    # save png (single image)
-                    save_path = os.path.join(
-                        modelConfig["sampled_dir_test"], f"{fname}_{e}.png"
-                    )
-                    save_image(sampled_cpu[i], save_path)
+                # save png (single image)
+                save_path = os.path.join(
+                    modelConfig["sampled_dir_test"], f"{fname}_{e}.png"
+                )
+                save_image(sampled_cpu[i], save_path)
 
-                    # optional: log only first few to wandb to avoid spam
-                    if i == 0:
-                        run.log({'sampled image': wandb.Image(save_path)})
+                # optional: log only first few to wandb to avoid spam
+                if i == 0:
+                    run.log({'sampled image': wandb.Image(save_path)})
 
         torch.distributed.barrier()
 
