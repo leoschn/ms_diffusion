@@ -359,10 +359,6 @@ def train_ms(modelConfig: Dict):
                 )
                 save_image(sampled_cpu[i], save_path)
 
-                # optional: log only first few to wandb to avoid spam
-                if i == 0:
-                    run.log({'sampled image': wandb.Image(save_path)})
-
         torch.distributed.barrier()
 
         total_mse_tensor = torch.tensor(total_mse, device=device)
