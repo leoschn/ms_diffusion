@@ -44,14 +44,14 @@ def train_ms(modelConfig: Dict):
     device = torch.device(f"cuda:{local_rank}")
     #train data
     dataset_train = ms_dataset(root=modelConfig["dataset_train"],im_size=modelConfig["im_size"],window=modelConfig["dataset_window"],total_windows=modelConfig["n_window"])
-    sampler_train=DistributedSampler(dataset_train,shuffle=True,drop_last=True)
+    sampler_train=DistributedSampler(dataset_train,shuffle=True,drop_last=False)
     dataloader_train = DataLoader(
-        dataset_train, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=1, drop_last=True, pin_memory=True,sampler=sampler_train)
+        dataset_train, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=1, drop_last=False, pin_memory=True,sampler=sampler_train)
 
     dataset_val = ms_dataset(root=modelConfig["dataset_val"],im_size=modelConfig["im_size"],window=modelConfig["dataset_window"],total_windows=modelConfig["n_window"])
     sampler_val=DistributedSampler(dataset_val,shuffle=False,drop_last=True)
     dataloader_val = DataLoader(
-        dataset_val, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=1, drop_last=True, pin_memory=True,sampler=sampler_val)
+        dataset_val, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=1, drop_last=False, pin_memory=True,sampler=sampler_val)
 
 
     #test data
