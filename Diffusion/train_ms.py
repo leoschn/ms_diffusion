@@ -355,7 +355,7 @@ def train_ms(modelConfig: Dict):
 
                 # save png (single image)
                 save_path = os.path.join(
-                    modelConfig["sampled_dir_test"], f"{fname}_{e}.png"
+                    modelConfig["sampled_dir_test"], f"{fname}_{best_epoch}.png"
                 )
                 save_image(sampled_cpu[i], save_path)
 
