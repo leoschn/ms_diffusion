@@ -348,7 +348,7 @@ def train_ms(modelConfig: Dict):
                 # save pkl (single image)
                 arr = sampled_cpu[i].numpy()
                 with open(
-                        os.path.join(modelConfig["sampled_dir_test"], f"{fname}_{e}.pkl"),
+                        os.path.join(modelConfig["sampled_dir_test"], f"{fname}_{best_epoch}.pkl"),
                         'wb'
                 ) as f:
                     pickle.dump(arr, f)
