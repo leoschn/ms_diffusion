@@ -56,10 +56,10 @@ def train_ms(modelConfig: Dict):
 
     #test data
     dataset_test = ms_dataset(root=modelConfig["dataset_test"],im_size=modelConfig["im_size"],window=modelConfig["dataset_window"],total_windows=modelConfig["n_window"])
-    sampler_test = DistributedSampler(dataset_test, shuffle=False, drop_last=True)
+    sampler_test = DistributedSampler(dataset_test, shuffle=False, drop_last=False)
     sampler_test.set_epoch(0)
     dataloader_test = DataLoader(
-        dataset_test, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=1, drop_last=True,
+        dataset_test, batch_size=modelConfig["batch_size"], shuffle=False, num_workers=1, drop_last=False,
         pin_memory=True, sampler=sampler_test)
 
     #model
