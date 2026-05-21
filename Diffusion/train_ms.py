@@ -379,6 +379,9 @@ def train_ms(modelConfig: Dict):
         #         "loss_test": mean_mse.item(),
         #         "psnr_test": mean_psnr.item(),
         #     })
+        print("epoch_test ", best_epoch)
+        print("loss_test ", mean_mse.item())
+        print("psnr_test ", mean_psnr.item())
     torch.distributed.barrier()
 
     # if rank == 0:
