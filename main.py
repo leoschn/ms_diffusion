@@ -21,7 +21,7 @@ def main(model_config = None):
         "loss":args.loss,
         "num_res_blocks": 2,
         "dropout": 0.15,
-        "lr": 1e-4,
+        "lr": args.lr,
         "multiplier": 2.,
         "beta_1": 1e-4,
         "beta_T": 0.02,
